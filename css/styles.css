@@ -1272,13 +1272,10 @@ html[lang="en"] .lang [data-l="en"] {
   background: var(--accent);
   color: var(--accent-ink);
   box-shadow: 0 14px 40px -10px rgba(200, 242, 90, .55);
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(16px) scale(.9);
-  transition: opacity .4s var(--ease), transform .4s var(--ease);
+  transition: opacity .5s var(--ease), transform .5s var(--ease);
 }
 .wa-float svg { width: 26px; height: 26px; fill: currentColor; }
-.wa-float.is-visible { opacity: 1; pointer-events: auto; transform: none; }
+.js .wa-float:not(.is-visible) { opacity: 0; pointer-events: none; transform: translateY(16px) scale(.9); }
 .wa-float:hover { transform: scale(1.06); }
 
 /* =========================================================

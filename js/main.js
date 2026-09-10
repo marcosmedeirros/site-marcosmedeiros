@@ -259,16 +259,12 @@
      ------------------------------------------------------------ */
   const nav = $('#nav');
   const menuBtn = $('#menuBtn');
-  const waFloat = $('#waFloat');
-  const hero = $('.hero');
-
-  const onScroll = () => {
-    const y = window.scrollY;
-    nav.classList.toggle('is-scrolled', y > 12);
-    waFloat.classList.toggle('is-visible', y > hero.offsetHeight * 0.8);
-  };
+  const onScroll = () => nav.classList.toggle('is-scrolled', window.scrollY > 12);
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+
+  // botão flutuante do WhatsApp entra logo após o carregamento
+  setTimeout(() => $('#waFloat').classList.add('is-visible'), 800);
 
   const setMenu = (open) => {
     nav.classList.toggle('is-open', open);
