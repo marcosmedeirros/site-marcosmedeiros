@@ -1,0 +1,579 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Marcos Medeiros · Sistemas, sites e automações sob medida</title>
+  <meta name="description" content="Desenvolvedor em Santa Maria/RS. Sistemas de gestão e estoque, bots de WhatsApp, lojas, sites e integrações feitos sob medida — do banco de dados à tela.">
+  <meta name="theme-color" content="#0A0A0B">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="Marcos Medeiros · Você tem a ideia. Eu construo o sistema.">
+  <meta property="og:description" content="Sistemas de gestão, bots de WhatsApp, lojas, sites e automações feitos sob medida.">
+  <!-- Quando tiver o domínio, troque por URL absoluta: https://seudominio.com.br/assets/img/og.png -->
+  <meta property="og:image" content="assets/img/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@400;500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+  <script>document.documentElement.classList.add('js')</script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "name": "Marcos Medeiros — Desenvolvimento de sistemas",
+    "description": "Sistemas de gestão e estoque, bots de WhatsApp, lojas, sites e integrações sob medida.",
+    "areaServed": "BR",
+    "address": { "@type": "PostalAddress", "addressLocality": "Santa Maria", "addressRegion": "RS", "addressCountry": "BR" },
+    "telephone": "+55 55 99716-4253",
+    "email": "medeirros99@gmail.com",
+    "sameAs": ["https://www.linkedin.com/in/marcos-medeiros-dev/"]
+  }
+  </script>
+</head>
+<body>
+  <a class="skip" href="#conteudo" data-i18n="skip">Pular para o conteúdo</a>
+
+  <!-- ============ NAV ============ -->
+  <header class="nav" id="nav">
+    <div class="container nav__inner">
+      <a href="#topo" class="brand" aria-label="Marcos Medeiros — início">
+        <span class="brand__mark" aria-hidden="true">m</span>
+        <span class="brand__name">Marcos Medeiros</span>
+      </a>
+
+      <nav class="nav__links" aria-label="Principal">
+        <a href="#solucoes" data-i18n="nav.solutions">Soluções</a>
+        <a href="#processo" data-i18n="nav.process">Como funciona</a>
+        <a href="#trabalhos" data-i18n="nav.work">Trabalhos</a>
+        <a href="#sobre" data-i18n="nav.about">Sobre</a>
+        <a href="#duvidas" data-i18n="nav.faq">Dúvidas</a>
+      </nav>
+
+      <div class="nav__actions">
+        <button class="lang" id="langToggle" type="button" data-i18n-aria="lang.aria" aria-label="Switch to English">
+          <span data-l="pt">PT</span><span data-l="en">EN</span>
+        </button>
+        <a class="btn btn--sm btn--light nav__cta" data-wa="default" href="https://wa.me/5555997164253" target="_blank" rel="noopener">
+          <span data-i18n="nav.cta">Falar comigo</span>
+        </a>
+        <button class="menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="mobileMenu" aria-label="Menu">
+          <span></span><span></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="mobile-menu" id="mobileMenu">
+      <div class="container">
+        <a href="#solucoes" data-i18n="nav.solutions">Soluções</a>
+        <a href="#processo" data-i18n="nav.process">Como funciona</a>
+        <a href="#trabalhos" data-i18n="nav.work">Trabalhos</a>
+        <a href="#sobre" data-i18n="nav.about">Sobre</a>
+        <a href="#duvidas" data-i18n="nav.faq">Dúvidas</a>
+        <a class="btn btn--accent" data-wa="default" href="https://wa.me/5555997164253" target="_blank" rel="noopener">
+          <span data-i18n="nav.cta">Falar comigo</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <main id="conteudo">
+
+    <!-- ============ HERO ============ -->
+    <section class="hero" id="topo">
+      <div class="hero__bg" aria-hidden="true">
+        <div class="hero__grid"></div>
+        <div class="hero__glow"></div>
+      </div>
+
+      <div class="container hero__inner">
+        <p class="badge reveal"><span class="pulse" aria-hidden="true"></span><span data-i18n="hero.badge">Disponível para novos projetos</span></p>
+
+        <h1 class="hero__title reveal" style="--d:.08s">
+          <span class="hero__line" data-i18n="hero.t1">Você tem a ideia.</span>
+          <span class="hero__line"><span data-i18n="hero.t2">Eu construo o</span> <em class="rotator" aria-hidden="true"><span class="rotator__word" id="rotator">sistema.</span></em><span class="sr-only" data-i18n="hero.sr">sistema.</span></span>
+        </h1>
+
+        <p class="hero__sub reveal" style="--d:.16s" data-i18n="hero.sub">Sistemas de gestão, bots de WhatsApp, lojas, sites e automações. Feitos sob medida para como a sua empresa funciona de verdade — do banco de dados à tela.</p>
+
+        <div class="hero__cta reveal" style="--d:.24s">
+          <a class="btn btn--accent btn--lg" data-wa="default" href="https://wa.me/5555997164253" target="_blank" rel="noopener">
+            <span data-i18n="hero.cta1">Me conta sua ideia</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </a>
+          <a class="btn btn--ghost btn--lg" href="#solucoes"><span data-i18n="hero.cta2">Qual é o seu problema?</span></a>
+        </div>
+
+        <div class="hero__stats reveal" style="--d:.32s">
+          <div class="stat">
+            <p class="stat__num">2</p>
+            <p class="stat__label" data-i18n="stats.1">sistemas em produção, feitos e mantidos por mim</p>
+          </div>
+          <div class="stat">
+            <p class="stat__num">2021</p>
+            <p class="stat__label" data-i18n="stats.2">desde quando a FBA Brasil está no ar, sem parar</p>
+          </div>
+          <div class="stat">
+            <p class="stat__num">1:1</p>
+            <p class="stat__label" data-i18n="stats.3">você fala direto com quem escreve o código</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STACK MARQUEE ============ -->
+    <div class="marquee" aria-label="Tecnologias">
+      <ul class="marquee__track">
+        <li>PHP</li><li>JavaScript</li><li>Node.js</li><li>SQL</li><li>WordPress</li><li>Bubble</li><li>Supabase</li><li>Google Cloud</li><li>Oracle Cloud</li><li>Vercel</li>
+        <li aria-hidden="true">PHP</li><li aria-hidden="true">JavaScript</li><li aria-hidden="true">Node.js</li><li aria-hidden="true">SQL</li><li aria-hidden="true">WordPress</li><li aria-hidden="true">Bubble</li><li aria-hidden="true">Supabase</li><li aria-hidden="true">Google Cloud</li><li aria-hidden="true">Oracle Cloud</li><li aria-hidden="true">Vercel</li>
+      </ul>
+    </div>
+
+    <!-- ============ SOLUÇÕES (problema → solução) ============ -->
+    <section class="section" id="solucoes">
+      <div class="container">
+        <div class="section__head reveal">
+          <p class="eyebrow"><b>01</b> <span data-i18n="sol.eyebrow">Soluções</span></p>
+          <h2 class="h2" data-i18n="sol.title">Qual é o seu problema? <em>Eu tenho a solução.</em></h2>
+          <p class="lead" data-i18n="sol.lead">Escolha o que mais parece com o seu dia a dia. Todo projeto começa por um problema concreto, não por um catálogo de tecnologia.</p>
+        </div>
+
+        <div class="solver reveal">
+          <div class="solver__side">
+            <div class="solver__tabs" role="tablist" aria-label="Problemas" data-i18n-aria="sol.tabs">
+              <button class="solver__tab" role="tab" id="tab-1" aria-controls="panel-1" aria-selected="true" type="button">
+                <span class="solver__num">01</span><span class="solver__q" data-i18n="p1.q">Controlo tudo em planilha e já perdi dinheiro com isso.</span>
+              </button>
+              <button class="solver__tab" role="tab" id="tab-2" aria-controls="panel-2" aria-selected="false" tabindex="-1" type="button">
+                <span class="solver__num">02</span><span class="solver__q" data-i18n="p2.q">Demoro para responder no WhatsApp e perco cliente.</span>
+              </button>
+              <button class="solver__tab" role="tab" id="tab-3" aria-controls="panel-3" aria-selected="false" tabindex="-1" type="button">
+                <span class="solver__num">03</span><span class="solver__q" data-i18n="p3.q">Quero vender meus produtos pela internet.</span>
+              </button>
+              <button class="solver__tab" role="tab" id="tab-4" aria-controls="panel-4" aria-selected="false" tabindex="-1" type="button">
+                <span class="solver__num">04</span><span class="solver__q" data-i18n="p4.q">Minha empresa não tem site — ou ninguém encontra.</span>
+              </button>
+              <button class="solver__tab" role="tab" id="tab-5" aria-controls="panel-5" aria-selected="false" tabindex="-1" type="button">
+                <span class="solver__num">05</span><span class="solver__q" data-i18n="p5.q">Faço a mesma tarefa manual todo santo dia.</span>
+              </button>
+              <button class="solver__tab" role="tab" id="tab-6" aria-controls="panel-6" aria-selected="false" tabindex="-1" type="button">
+                <span class="solver__num">06</span><span class="solver__q" data-i18n="p6.q">Meu sistema parou e quem fez sumiu.</span>
+              </button>
+            </div>
+            <p class="solver__other">
+              <span data-i18n="sol.other">Não achou o seu?</span>
+              <a data-wa="default" href="https://wa.me/5555997164253" target="_blank" rel="noopener" data-i18n="sol.otherLink">Me conta como é o seu dia a&nbsp;dia&nbsp;→</a>
+            </p>
+          </div>
+
+          <div class="solver__panels">
+            <!-- 1 -->
+            <article class="panel spot is-active" role="tabpanel" id="panel-1" aria-labelledby="tab-1">
+              <div class="panel__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="M3.27 6.96 12 12.01l8.73-5.05M12 22.08V12"/></svg>
+              </div>
+              <p class="panel__kicker" data-i18n="sol.kicker">A solução</p>
+              <h3 class="panel__title" data-i18n="p1.t">Sistema de gestão e estoque</h3>
+              <p class="panel__desc" data-i18n="p1.d">Um painel feito para o jeito que a sua operação funciona: você sabe na hora o que entrou, o que saiu e o que está disponível — sem caderno e sem planilha perdida.</p>
+              <ul class="panel__list">
+                <li data-i18n="p1.l1">Cadastro de itens, clientes e fornecedores</li>
+                <li data-i18n="p1.l2">Entrada, saída e disponibilidade em tempo real</li>
+                <li data-i18n="p1.l3">Histórico completo e relatórios</li>
+                <li data-i18n="p1.l4">Login individual para cada pessoa da equipe</li>
+              </ul>
+              <div class="panel__foot">
+                <a class="btn btn--accent" data-wa-problem="1" href="https://wa.me/5555997164253" target="_blank" rel="noopener">
+                  <span data-i18n="sol.cta">Quero resolver isso</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </a>
+                <a class="panel__case" href="#cavalheiro" data-i18n="p1.case">Veja o caso Cavalheiro Locações ↓</a>
+              </div>
+            </article>
+
+            <!-- 2 -->
+            <article class="panel spot" role="tabpanel" id="panel-2" aria-labelledby="tab-2">
+              <div class="panel__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8z"/></svg>
+              </div>
+              <p class="panel__kicker" data-i18n="sol.kicker">A solução</p>
+              <h3 class="panel__title" data-i18n="p2.t">Bot de WhatsApp</h3>
+              <p class="panel__desc" data-i18n="p2.d">Seu cliente é respondido na hora, a qualquer hora. O bot resolve as perguntas de rotina, anota o pedido e avisa você quando precisa de uma pessoa.</p>
+              <ul class="panel__list">
+                <li data-i18n="p2.l1">Atendimento automático a qualquer hora</li>
+                <li data-i18n="p2.l2">Respostas para as perguntas de sempre</li>
+                <li data-i18n="p2.l3">Captação de pedidos e dados do cliente</li>
+                <li data-i18n="p2.l4">Aviso interno para a sua equipe</li>
+              </ul>
+              <div class="panel__foot">
+                <a class="btn btn--accent" data-wa-problem="2" href="https://wa.me/5555997164253" target="_blank" rel="noopener">
+                  <span data-i18n="sol.cta">Quero resolver isso</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </a>
+                <a class="panel__case" href="#fba" data-i18n="p2.case">Veja o bot da FBA Brasil ↓</a>
+              </div>
+            </article>
+
+            <!-- 3 -->
+            <article class="panel spot" role="tabpanel" id="panel-3" aria-labelledby="tab-3">
+              <div class="panel__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
+              </div>
+              <p class="panel__kicker" data-i18n="sol.kicker">A solução</p>
+              <h3 class="panel__title" data-i18n="p3.t">Loja ou catálogo online</h3>
+              <p class="panel__desc" data-i18n="p3.d">Uma vitrine bonita e rápida no celular, com o pedido chegando direto no seu WhatsApp ou no seu painel. Preço, foto e disponibilidade sob o seu controle.</p>
+              <ul class="panel__list">
+                <li data-i18n="p3.l1">Produtos ou serviços com foto e preço</li>
+                <li data-i18n="p3.l2">Pedido direto no WhatsApp ou no painel</li>
+                <li data-i18n="p3.l3">Você mesmo atualiza, sem depender de ninguém</li>
+                <li data-i18n="p3.l4">Rápido e pensado primeiro para o celular</li>
+              </ul>
+              <div class="panel__foot">
+                <a class="btn btn--accent" data-wa-problem="3" href="https://wa.me/5555997164253" target="_blank" rel="noopener">
+                  <span data-i18n="sol.cta">Quero resolver isso</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </a>
+                <a class="panel__case" href="#cavalheiro" data-i18n="p3.case">Veja o catálogo da Cavalheiro ↓</a>
+              </div>
+            </article>
+
+            <!-- 4 -->
+            <article class="panel spot" role="tabpanel" id="panel-4" aria-labelledby="tab-4">
+              <div class="panel__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+              </div>
+              <p class="panel__kicker" data-i18n="sol.kicker">A solução</p>
+              <h3 class="panel__title" data-i18n="p4.t">Site ou plataforma</h3>
+              <p class="panel__desc" data-i18n="p4.d">Do site institucional que passa confiança à plataforma completa, com login, área do usuário e as regras do seu negócio.</p>
+              <ul class="panel__list">
+                <li data-i18n="p4.l1">Rápido e otimizado para aparecer no Google</li>
+                <li data-i18n="p4.l2">Visual moderno que funciona em qualquer tela</li>
+                <li data-i18n="p4.l3">Área de login e painel quando precisa</li>
+                <li data-i18n="p4.l4">Fácil de você mesmo atualizar depois</li>
+              </ul>
+              <div class="panel__foot">
+                <a class="btn btn--accent" data-wa-problem="4" href="https://wa.me/5555997164253" target="_blank" rel="noopener">
+                  <span data-i18n="sol.cta">Quero resolver isso</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </a>
+                <a class="panel__case" href="#fba" data-i18n="p4.case">Veja a plataforma da FBA Brasil ↓</a>
+              </div>
+            </article>
+
+            <!-- 5 -->
+            <article class="panel spot" role="tabpanel" id="panel-5" aria-labelledby="tab-5">
+              <div class="panel__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              </div>
+              <p class="panel__kicker" data-i18n="sol.kicker">A solução</p>
+              <h3 class="panel__title" data-i18n="p5.t">Integrações e automações</h3>
+              <p class="panel__desc" data-i18n="p5.d">Ligo as ferramentas que você já usa para que elas conversem entre si. Menos trabalho repetido, menos erro de digitação e mais tempo para o que importa.</p>
+              <ul class="panel__list">
+                <li data-i18n="p5.l1">Pagamentos, e-mail e planilhas conectados</li>
+                <li data-i18n="p5.l2">Integração com APIs de terceiros</li>
+                <li data-i18n="p5.l3">Rotinas que rodam sozinhas</li>
+                <li data-i18n="p5.l4">Avisos e relatórios automáticos</li>
+              </ul>
+              <div class="panel__foot">
+                <a class="btn btn--accent" data-wa-problem="5" href="https://wa.me/5555997164253" target="_blank" rel="noopener">
+                  <span data-i18n="sol.cta">Quero resolver isso</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </a>
+                <a class="panel__case" href="#sobre" data-i18n="p5.case">Faço integrações no dia a dia ↓</a>
+              </div>
+            </article>
+
+            <!-- 6 -->
+            <article class="panel spot" role="tabpanel" id="panel-6" aria-labelledby="tab-6">
+              <div class="panel__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+              </div>
+              <p class="panel__kicker" data-i18n="sol.kicker">A solução</p>
+              <h3 class="panel__title" data-i18n="p6.t">Manutenção e resgate</h3>
+              <p class="panel__desc" data-i18n="p6.d">Sistema que outra pessoa fez e travou, banco de dados corrompido, site fora do ar. Eu assumo, arrumo e passo a manter.</p>
+              <ul class="panel__list">
+                <li data-i18n="p6.l1">Diagnóstico do que está quebrado</li>
+                <li data-i18n="p6.l2">Correção e sistema de volta ao ar</li>
+                <li data-i18n="p6.l3">Organização do código e do banco de dados</li>
+                <li data-i18n="p6.l4">Manutenção contínua depois</li>
+              </ul>
+              <div class="panel__foot">
+                <a class="btn btn--accent" data-wa-problem="6" href="https://wa.me/5555997164253" target="_blank" rel="noopener">
+                  <span data-i18n="sol.cta">Quero resolver isso</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+                </a>
+                <a class="panel__case" href="#sobre" data-i18n="p6.case">Conheça minha experiência ↓</a>
+              </div>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PROCESSO ============ -->
+    <section class="section section--line" id="processo">
+      <div class="container split">
+        <div class="split__aside reveal">
+          <p class="eyebrow"><b>02</b> <span data-i18n="proc.eyebrow">Como funciona</span></p>
+          <h2 class="h2" data-i18n="proc.title">Do primeiro papo <em>ao sistema no ar.</em></h2>
+          <p class="lead" data-i18n="proc.lead">Você fala com quem vai escrever o código. Sem intermediário, sem repassar para terceiro.</p>
+        </div>
+
+        <ol class="steps">
+          <li class="step reveal">
+            <span class="step__num">01</span>
+            <div>
+              <h3 data-i18n="s1.t">Conversa</h3>
+              <p data-i18n="s1.d">Você me conta o problema. Eu pergunto como a operação funciona hoje, onde trava e o que precisa sair primeiro.</p>
+            </div>
+          </li>
+          <li class="step reveal">
+            <span class="step__num">02</span>
+            <div>
+              <h3 data-i18n="s2.t">Escopo e orçamento</h3>
+              <p data-i18n="s2.d">Escrevo o que será entregue, em quais etapas, com prazo e valor fechado. Você aprova antes de qualquer linha de código.</p>
+            </div>
+          </li>
+          <li class="step reveal">
+            <span class="step__num">03</span>
+            <div>
+              <h3 data-i18n="s3.t">Construção com você vendo</h3>
+              <p data-i18n="s3.d">Entrego em partes utilizáveis. Você testa cada etapa e corrige o rumo cedo, não no final.</p>
+            </div>
+          </li>
+          <li class="step reveal">
+            <span class="step__num">04</span>
+            <div>
+              <h3 data-i18n="s4.t">No ar e treinado</h3>
+              <p data-i18n="s4.d">Publico, migro seus dados e treino quem vai usar. O sistema entra em operação com a equipe sabendo mexer.</p>
+            </div>
+          </li>
+          <li class="step reveal">
+            <span class="step__num">05</span>
+            <div>
+              <h3 data-i18n="s5.t">Suporte contínuo</h3>
+              <p data-i18n="s5.d">Depois de entregue eu continuo por perto para ajuste, correção e o próximo módulo quando a empresa crescer.</p>
+            </div>
+          </li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ============ TRABALHOS ============ -->
+    <section class="section section--line" id="trabalhos">
+      <div class="container">
+        <div class="section__head reveal">
+          <p class="eyebrow"><b>03</b> <span data-i18n="work.eyebrow">Trabalhos</span></p>
+          <h2 class="h2" data-i18n="work.title">Sistemas reais, <em>no ar agora.</em></h2>
+          <p class="lead" data-i18n="work.lead">Dois projetos que fiz inteiros, da modelagem do banco à tela — e que continuo mantendo.</p>
+        </div>
+
+        <div class="cases">
+          <article class="case reveal" id="fba" style="--glow:rgba(229,57,70,.22)">
+            <div class="case__media">
+              <div class="shots" data-shots>
+                <div class="shots__tabs">
+                  <button class="shots__tab is-active" type="button" aria-pressed="true"><span data-i18n="shots.site">Site</span><span class="shots__bar" aria-hidden="true"></span></button>
+                  <button class="shots__tab" type="button" aria-pressed="false"><span data-i18n="fba.shot2">Painel do GM</span><span class="shots__bar" aria-hidden="true"></span></button>
+                </div>
+                <a class="browser" href="https://fbabrasil.com.br" target="_blank" rel="noopener" aria-label="Abrir fbabrasil.com.br">
+                  <div class="browser__bar"><i></i><i></i><i></i><span class="browser__url">fbabrasil.com.br</span></div>
+                  <div class="browser__screen">
+                    <img class="is-active" src="assets/img/fba.jpg" data-url="fbabrasil.com.br" alt="Página inicial da plataforma FBA Brasil" width="1440" height="900" loading="lazy" decoding="async">
+                    <img src="assets/img/fba-dashboard.jpg" data-url="fbabrasil.com.br · área do GM" alt="Painel do general manager na FBA Brasil, com elenco, salary cap, picks e trades" loading="lazy" decoding="async">
+                  </div>
+                </a>
+              </div>
+            </div>
+            <div class="case__body">
+              <p class="case__meta" data-i18n="fba.meta">Liga de fantasy basquete e NBA 2K Pro-Am · desde 2021</p>
+              <h3 class="case__title">FBA Brasil</h3>
+              <div class="case__row">
+                <span class="case__label" data-i18n="case.problem">O problema</span>
+                <p data-i18n="fba.problem">Uma liga com 122 jogadores em 122 times, quatro divisões com acesso e descenso, draft, trocas e free agency — tudo tocado à mão, em planilha e mensagem solta.</p>
+              </div>
+              <div class="case__row">
+                <span class="case__label" data-i18n="case.solution">O que fiz</span>
+                <p data-i18n="fba.solution">A plataforma inteira: cadastro e gestão de usuários, o aplicativo, a área do general manager com draft e trocas, os minigames diários, o jornal da liga e o bot de atendimento no WhatsApp.</p>
+              </div>
+              <ul class="tags">
+                <li data-i18n="fba.tag1">Plataforma web</li>
+                <li data-i18n="fba.tag2">Aplicativo</li>
+                <li data-i18n="fba.tag3">Draft e trocas</li>
+                <li data-i18n="fba.tag4">Minigames</li>
+                <li data-i18n="fba.tag5">Bot de WhatsApp</li>
+              </ul>
+              <a class="link-arrow" href="https://fbabrasil.com.br" target="_blank" rel="noopener">
+                fbabrasil.com.br
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
+              </a>
+            </div>
+          </article>
+
+          <article class="case case--flip reveal" id="cavalheiro" style="--glow:rgba(255,122,26,.22)">
+            <div class="case__media">
+              <div class="shots" data-shots>
+                <div class="shots__tabs">
+                  <button class="shots__tab is-active" type="button" aria-pressed="true"><span data-i18n="shots.site">Site</span><span class="shots__bar" aria-hidden="true"></span></button>
+                  <button class="shots__tab" type="button" aria-pressed="false"><span data-i18n="cav.shot2">Catálogo</span><span class="shots__bar" aria-hidden="true"></span></button>
+                </div>
+                <a class="browser" href="https://cavalheirolocacoes.com.br" target="_blank" rel="noopener" aria-label="Abrir cavalheirolocacoes.com.br">
+                  <div class="browser__bar"><i></i><i></i><i></i><span class="browser__url">cavalheirolocacoes.com.br</span></div>
+                  <div class="browser__screen">
+                    <img class="is-active" src="assets/img/cavalheiro.jpg" data-url="cavalheirolocacoes.com.br" alt="Página inicial do site da Cavalheiro Locações" width="1440" height="900" loading="lazy" decoding="async">
+                    <img src="assets/img/cavalheiro-catalogo.jpg" data-url="cavalheirolocacoes.com.br/catalogo" alt="Catálogo de equipamentos da Cavalheiro Locações, com categorias, busca e botão de alugar no WhatsApp" width="1440" height="900" loading="lazy" decoding="async">
+                  </div>
+                </a>
+              </div>
+            </div>
+            <div class="case__body">
+              <p class="case__meta" data-i18n="cav.meta">Locadora de máquinas e andaimes · Santa Maria/RS</p>
+              <h3 class="case__title">Cavalheiro Locações</h3>
+              <div class="case__row">
+                <span class="case__label" data-i18n="case.problem">O problema</span>
+                <p data-i18n="cav.problem">O controle de equipamentos vivia em caderno e planilha. Ninguém sabia de imediato o que estava locado, o que tinha voltado e o que estava disponível para alugar.</p>
+              </div>
+              <div class="case__row">
+                <span class="case__label" data-i18n="case.solution">O que fiz</span>
+                <p data-i18n="cav.solution">O site com catálogo de equipamentos e pedido caindo direto no WhatsApp da loja, mais o sistema interno de estoque com saída, retorno, disponibilidade e histórico de cada item.</p>
+              </div>
+              <ul class="tags">
+                <li data-i18n="cav.tag1">Site institucional</li>
+                <li data-i18n="cav.tag2">Catálogo</li>
+                <li data-i18n="cav.tag3">Pedido no WhatsApp</li>
+                <li data-i18n="cav.tag4">Controle de estoque</li>
+              </ul>
+              <a class="link-arrow" href="https://cavalheirolocacoes.com.br" target="_blank" rel="noopener">
+                cavalheirolocacoes.com.br
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"/></svg>
+              </a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SOBRE ============ -->
+    <section class="section section--line" id="sobre">
+      <div class="container about">
+        <div class="about__media reveal">
+          <!--
+            Para usar sua foto: salve em assets/img/marcos.jpg e troque o <div class="portrait__mono"> abaixo por
+            <img class="portrait__img" src="assets/img/marcos.jpg" alt="Marcos Medeiros">
+          -->
+          <div class="portrait">
+            <div class="portrait__mono" aria-hidden="true">mm</div>
+            <div class="portrait__tag"><span>Santa Maria · RS</span><span>BR</span></div>
+          </div>
+        </div>
+
+        <div class="about__text">
+          <div class="reveal">
+            <p class="eyebrow"><b>04</b> <span data-i18n="about.eyebrow">Sobre</span></p>
+            <h2 class="h2" data-i18n="about.title">Prazer, <em>Marcos.</em></h2>
+          </div>
+          <p class="about__big reveal" data-i18n="about.p1">Sou desenvolvedor em Santa Maria, no Rio Grande do Sul. Entrei na Softaliza como estagiário e hoje sou desenvolvedor pleno, trabalhando com sites e plataformas para associações profissionais e seus congressos: sistemas de associados, hotsites de eventos, integrações de pagamento e e-mail, banco de dados e infraestrutura.</p>
+          <p class="reveal" data-i18n="about.p2">Fora do trabalho fixo, atendo empresas e projetos próprios. É aí que entram a FBA Brasil e a Cavalheiro: nos dois casos eu fiz tudo sozinho, da modelagem do banco à tela, e continuo mantendo depois de entregue.</p>
+          <p class="reveal" data-i18n="about.p3">O que eu vendo não é a tecnologia: é o problema resolvido e um sistema que continua funcionando depois que eu entrego.</p>
+
+          <div class="facts reveal">
+            <div class="fact">
+              <span class="fact__label" data-i18n="about.f1l">Hoje</span>
+              <span data-i18n="about.f1">Desenvolvedor pleno na Softaliza</span>
+            </div>
+            <div class="fact">
+              <span class="fact__label" data-i18n="about.f2l">Base</span>
+              <span data-i18n="about.f2">Santa Maria/RS — atendo remoto</span>
+            </div>
+            <div class="fact">
+              <span class="fact__label" data-i18n="about.f3l">Currículo</span>
+              <a href="https://www.linkedin.com/in/marcos-medeiros-dev/" target="_blank" rel="noopener">LinkedIn ↗</a>
+            </div>
+          </div>
+
+          <ul class="chips reveal" aria-label="Stack">
+            <li>PHP</li><li>JavaScript</li><li>Node.js</li><li>SQL</li><li>WordPress</li><li>Bubble</li><li>Supabase</li><li>Google Cloud</li><li>Oracle Cloud</li><li>Vercel</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ============ -->
+    <section class="section section--line" id="duvidas">
+      <div class="container split">
+        <div class="split__aside reveal">
+          <p class="eyebrow"><b>05</b> <span data-i18n="faq.eyebrow">Dúvidas</span></p>
+          <h2 class="h2" data-i18n="faq.title">Perguntas <em>frequentes.</em></h2>
+          <p class="lead"><span data-i18n="faq.lead">Ficou alguma dúvida?</span> <a class="inline-link" data-wa="default" href="https://wa.me/5555997164253" target="_blank" rel="noopener" data-i18n="faq.leadLink">Me chama no WhatsApp.</a></p>
+        </div>
+
+        <div class="faq reveal">
+          <details>
+            <summary><span data-i18n="q1.q">Quanto custa um sistema?</span><i class="faq__icon" aria-hidden="true"></i></summary>
+            <p data-i18n="q1.a">Depende do tamanho do problema. Depois da primeira conversa eu mando um escopo com etapas, prazo e valor fechado — você sabe exatamente o que vai pagar antes de começar.</p>
+          </details>
+          <details>
+            <summary><span data-i18n="q2.q">Quanto tempo leva?</span><i class="faq__icon" aria-hidden="true"></i></summary>
+            <p data-i18n="q2.a">O prazo sai junto com o escopo. Como eu entrego em partes utilizáveis, você começa a usar as primeiras funções antes do projeto inteiro ficar pronto.</p>
+          </details>
+          <details>
+            <summary><span data-i18n="q3.q">Preciso entender de tecnologia?</span><i class="faq__icon" aria-hidden="true"></i></summary>
+            <p data-i18n="q3.a">Não. Você explica como a sua operação funciona; a parte técnica é comigo. No final eu treino quem vai usar o sistema.</p>
+          </details>
+          <details>
+            <summary><span data-i18n="q4.q">Você atende fora de Santa Maria?</span><i class="faq__icon" aria-hidden="true"></i></summary>
+            <p data-i18n="q4.a">Sim. Trabalho remoto com clientes de qualquer lugar — a conversa acontece por WhatsApp ou chamada de vídeo.</p>
+          </details>
+          <details>
+            <summary><span data-i18n="q5.q">E depois que o sistema estiver no ar?</span><i class="faq__icon" aria-hidden="true"></i></summary>
+            <p data-i18n="q5.a">Continuo por perto para ajustes, correções e novos módulos. A FBA Brasil está no ar desde 2021 e eu sigo mantendo até hoje.</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CTA ============ -->
+    <section class="cta" id="contato">
+      <div class="container">
+        <div class="cta__card reveal">
+          <div class="cta__bg" aria-hidden="true"></div>
+          <p class="badge"><span class="pulse" aria-hidden="true"></span><span data-i18n="cta.badge">Primeira conversa sem compromisso</span></p>
+          <h2 class="cta__title" data-i18n="cta.title">Me conta o que <em>está travando.</em></h2>
+          <p class="cta__sub" data-i18n="cta.sub">Você explica o problema e eu digo se dá para resolver, como e quanto custa.</p>
+          <div class="cta__buttons">
+            <a class="btn btn--accent btn--lg" data-wa="default" href="https://wa.me/5555997164253" target="_blank" rel="noopener">
+              <svg class="wa" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+              <span data-i18n="cta.wa">Chamar no WhatsApp</span>
+            </a>
+            <a class="btn btn--ghost btn--lg" href="mailto:medeirros99@gmail.com"><span data-i18n="cta.mail">Mandar e-mail</span></a>
+          </div>
+          <ul class="cta__contacts">
+            <li><span>WhatsApp</span><a data-wa="default" href="https://wa.me/5555997164253" target="_blank" rel="noopener">(55) 99716-4253</a></li>
+            <li><span>E-mail</span><a href="mailto:medeirros99@gmail.com">medeirros99@gmail.com</a></li>
+            <li><span>LinkedIn</span><a href="https://www.linkedin.com/in/marcos-medeiros-dev/" target="_blank" rel="noopener">marcos-medeiros-dev</a></li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="container footer__inner">
+      <p>© <span id="year">2026</span> Marcos Medeiros · <span data-i18n="footer.made">Feito à mão em Santa Maria/RS</span></p>
+      <a href="#topo" class="footer__top"><span data-i18n="footer.top">Voltar ao topo</span> ↑</a>
+    </div>
+  </footer>
+
+  <!-- Botão flutuante WhatsApp -->
+  <a class="wa-float" id="waFloat" data-wa="default" href="https://wa.me/5555997164253" target="_blank" rel="noopener" data-i18n-aria="wa.aria" aria-label="Conversar no WhatsApp">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+  </a>
+
+  <script src="js/main.js" defer></script>
+</body>
+</html>
