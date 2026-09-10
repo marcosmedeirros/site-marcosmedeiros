@@ -1,9 +1,19 @@
 # Sem listagem de pastas
 Options -Indexes
 
+# www -> domínio principal (evita conteúdo duplicado no Google)
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
+  RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Tipos
+AddType application/manifest+json .webmanifest
+
 # Compressão
 <IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml text/plain application/xml
+  AddOutputFilterByType DEFLATE text/html text/css application/javascript image/svg+xml text/plain application/xml application/manifest+json
 </IfModule>
 
 # Cache de arquivos estáticos

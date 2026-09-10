@@ -24,7 +24,7 @@
     'hero.t1': 'You have the idea.',
     'hero.t2': 'I build the',
     'hero.sr': 'system.',
-    'hero.sub': 'Management systems, WhatsApp bots, online stores, websites and automation. Built around how your business actually works — from the database to the screen.',
+    'hero.sub': 'Developer based in Santa Maria, Brazil, working with clients nationwide. Management systems, WhatsApp bots, online stores, websites and automation built around how your business actually works.',
     'hero.cta1': 'Tell me your idea',
     'hero.cta2': 'What’s your problem?',
     'stats.1': 'systems in production, built and maintained by me',
@@ -164,20 +164,20 @@
     'cta.wa': 'Message on WhatsApp',
     'cta.mail': 'Send an e-mail',
 
-    'footer.made': 'Handcrafted in Santa Maria, Brazil',
+    'footer.made': 'Systems, websites and WhatsApp bots developer in Santa Maria, Brazil',
     'footer.top': 'Back to top'
   };
 
   const META = {
     pt: {
-      title: 'Marcos Medeiros · Sistemas, sites e automações sob medida',
-      description: 'Desenvolvedor em Santa Maria/RS. Sistemas de gestão e estoque, bots de WhatsApp, lojas, sites e integrações feitos sob medida — do banco de dados à tela.',
+      title: 'Desenvolvedor de Sistemas e Sites em Santa Maria/RS | Marcos Medeiros',
+      description: 'Desenvolvedor em Santa Maria/RS. Sistemas de gestão e estoque, bots de WhatsApp, lojas virtuais e sites sob medida. Atendo todo o Brasil — orçamento sem compromisso.',
       words: ['sistema.', 'site.', 'bot.', 'app.', 'painel.'],
       waDefault: 'Oi Marcos! Vi seu site e tenho uma ideia/problema que quero resolver.',
       waProblem: (q) => `Oi Marcos! Vi seu site. Meu problema: "${q}" Pode me ajudar?`
     },
     en: {
-      title: 'Marcos Medeiros · Custom systems, websites and automation',
+      title: 'Custom Software, Websites & WhatsApp Bots Developer | Marcos Medeiros',
       description: 'Developer based in Brazil. Management and inventory systems, WhatsApp bots, online stores, websites and integrations — from the database to the screen.',
       words: ['system.', 'website.', 'bot.', 'app.', 'dashboard.'],
       waDefault: 'Hi Marcos! I saw your website and I have an idea/problem I’d like to solve.',
