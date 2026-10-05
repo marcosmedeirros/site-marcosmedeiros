@@ -1,4 +1,4 @@
-const CACHE = 'controlevida-static-v2';
+const CACHE = 'controlevida-static-v3';
 const STATIC = ['/controlevida/assets/app.css','/controlevida/assets/app.js','/controlevida/assets/vendor/lucide.min.js','/controlevida/offline.html','/assets/icons/icon-192.png','/assets/icons/icon-512.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(STATIC)).then(() => self.skipWaiting())));
 self.addEventListener('activate', event => event.waitUntil(Promise.all([caches.keys().then(keys => Promise.all(keys.filter(k => k.startsWith('controlevida-') && k !== CACHE).map(k => caches.delete(k)))), self.clients.claim()])));
