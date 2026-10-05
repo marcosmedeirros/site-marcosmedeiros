@@ -1,0 +1,7 @@
+node_modules/
+.controlevida.local.php
+.private/
+*.log
+*.sqlite*
+.env
+test-results/

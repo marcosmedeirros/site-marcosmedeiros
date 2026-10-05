@@ -1,0 +1,23 @@
+<?php
+declare(strict_types=1);
+if(PHP_SAPI!=='cli')exit;
+require dirname(__DIR__).'/controlevida/server/core.php';
+$db=cv_db();
+if($db->getAttribute(PDO::ATTR_DRIVER_NAME)!=='sqlite')throw new RuntimeException('Fixture requires isolated SQLite.');
+$db->exec("CREATE TABLE fin_transactions(id INTEGER,user_id INTEGER,type TEXT,amount TEXT,description TEXT,category_id INTEGER,transaction_date TEXT,legacy_id INTEGER);
+CREATE TABLE finances(id INTEGER,user_id INTEGER,type TEXT,amount TEXT,description TEXT,created_at TEXT);
+CREATE TABLE fin_categories(id INTEGER,user_id INTEGER,name TEXT);
+CREATE TABLE fin_settings(user_id INTEGER,initial_balance TEXT);
+CREATE TABLE tasks(id INTEGER,user_id INTEGER,title TEXT,due_date TEXT,recurrence TEXT,recurrence_day INTEGER,legacy_id INTEGER,status INTEGER,area TEXT,priority INTEGER);
+CREATE TABLE task_completions(task_id INTEGER,done_date TEXT);
+CREATE TABLE habits(id INTEGER,name TEXT,recurrence TEXT,recurrence_day INTEGER,checked_dates TEXT);
+CREATE TABLE events(id INTEGER,user_id INTEGER,title TEXT,start_date TEXT,description TEXT);
+INSERT INTO fin_transactions VALUES(50,1,'expense','12.25','Modern',1,'2026-10-01',9);
+INSERT INTO finances VALUES(9,1,'expense','12.25','Old duplicate','2026-10-01 12:00:00');
+INSERT INTO finances VALUES(10,1,'income','20.00','Old only','2026-10-02 12:00:00');
+INSERT INTO fin_categories VALUES(1,1,'Casa');
+INSERT INTO fin_settings VALUES(1,'100.00');
+INSERT INTO tasks VALUES(30,1,'Weekly chore',NULL,'weekly',3,NULL,0,'casa',0);
+INSERT INTO task_completions VALUES(30,'2026-10-07');
+INSERT INTO habits VALUES(40,'Tiny habit','daily',NULL,'[\"2026-10-05\"]');
+INSERT INTO events VALUES(60,1,'Appointment','2026-10-06 14:00:00','Reminder');");
