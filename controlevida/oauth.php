@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/server/records.php';
-cv_headers();
+cv_headers(true);
 
 function cv_issue_token(string $user,string $client,string $name,string $scope): array {
     $access=cv_secret(); $refresh=cv_secret();

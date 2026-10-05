@@ -70,7 +70,8 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
   const redirect=origin+'/callback';
   async function authorize(scope='read write'){
     const url=new URL(base+'/oauth.php');url.search=new URLSearchParams({route:'authorize',response_type:'code',client_id:clientId,redirect_uri:redirect,code_challenge:challenge,code_challenge_method:'S256',resource:base+'/mcp.php',scope,state:'test-state'});
-    res=await request(url);assert.equal(res.status,200);const consent=await res.text();assert.match(consent,/Conectar assistente/);const requestId=consent.match(/name="request_id" value="([^"]+)"/)[1];
+    res=await request(url);assert.equal(res.status,200);const consent=await res.text();assert.match(consent,/Conectar assistente/);
+    assert.doesNotMatch(res.headers.get('content-security-policy'),/form-action/,'the consent form must be free to redirect to the assistant callback');const requestId=consent.match(/name="request_id" value="([^"]+)"/)[1];
     res=await request(base+'/oauth.php?route=authorize',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({csrf,request_id:requestId,decision:'allow',...(scope.includes('write')?{write:'1'}:{})})});
     assert.equal(res.status,302);return new URL(res.headers.get('location')).searchParams.get('code');
   }

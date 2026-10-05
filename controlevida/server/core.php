@@ -75,13 +75,14 @@ function cv_secret(): string { return rtrim(strtr(base64_encode(random_bytes(32)
 function cv_fail(string $message, int $status = 400): void { throw new DomainException($message, $status); }
 function cv_escape(string $s): string { return htmlspecialchars($s, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'); }
 
-function cv_headers(): void {
+function cv_headers(bool $leavesSite = false): void {
     header('Cache-Control: no-store, private');
     header('X-Content-Type-Options: nosniff');
     header('Referrer-Policy: no-referrer');
     header('X-Frame-Options: DENY');
     header('X-Robots-Tag: noindex, nofollow');
-    header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'");
+    // The OAuth consent form ends in a redirect to the assistant's callback, which form-action 'self' would block.
+    header("Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'" . ($leavesSite ? '' : "; form-action 'self'"));
 }
 
 function cv_json($data, int $status = 200): void {

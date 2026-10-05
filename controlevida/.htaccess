@@ -13,6 +13,11 @@ DirectoryIndex index.php
 </IfModule>
 <IfModule mod_headers.c>
   Header always set X-Robots-Tag "noindex, nofollow"
+  # The host swaps PHP's policy for a bare "upgrade-insecure-requests"; restate the app policy here.
+  Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests"
+  <Files "oauth.php">
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; upgrade-insecure-requests"
+  </Files>
   <Files "sw.js">
     Header set Cache-Control "no-cache"
   </Files>
