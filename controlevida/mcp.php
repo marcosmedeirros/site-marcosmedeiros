@@ -31,13 +31,13 @@ function cv_tool_schema(): array {
 try {
     $origin=$_SERVER['HTTP_ORIGIN'] ?? '';
     $u=parse_url(cv_url()); $expected=$u['scheme'].'://'.$u['host'].(isset($u['port']) ? ':'.$u['port'] : '');
-    if ($origin!=='' && $origin!==$expected) cv_fail('Origem nao autorizada.',403);
+    if ($origin!=='' && $origin!==$expected) cv_fail('Origem não autorizada.',403);
     $token=cv_token();
     if ($_SERVER['REQUEST_METHOD']!=='POST') { header('Allow: POST'); cv_fail('Este servidor usa HTTP sem fluxo SSE.',405); }
     $version=$_SERVER['HTTP_MCP_PROTOCOL_VERSION'] ?? '2025-06-18';
-    if (!in_array($version,['2025-06-18','2024-11-05'],true)) cv_fail('Versao de protocolo nao suportada.');
+    if (!in_array($version,['2025-06-18','2024-11-05'],true)) cv_fail('Versão de protocolo não suportada.');
     $in=cv_input(); $rpcId=$in['id'] ?? null;
-    if (($in['jsonrpc'] ?? '')!=='2.0' || !is_string($in['method'] ?? null)) cv_fail('Requisicao JSON-RPC invalida.');
+    if (($in['jsonrpc'] ?? '')!=='2.0' || !is_string($in['method'] ?? null)) cv_fail('Requisição JSON-RPC inválida.');
     if (!array_key_exists('id',$in)) { http_response_code(202); exit; }
     $method=$in['method']; $args=$in['params'] ?? [];
     if ($method==='initialize') $result=['protocolVersion'=>'2025-06-18','capabilities'=>['tools'=>['listChanged'=>false]],'serverInfo'=>['name'=>'controlevida','version'=>'1.0.0']];
@@ -45,7 +45,7 @@ try {
     elseif ($method==='tools/list') $result=['tools'=>cv_tool_schema()];
     elseif ($method==='tools/call') {
         $name=$args['name'] ?? ''; $data=$args['arguments'] ?? [];
-        if (!is_array($data)) cv_fail('Argumentos invalidos.');
+        if (!is_array($data)) cv_fail('Argumentos inválidos.');
         if (!in_array($name,['consultar_painel','listar_registros'],true)) cv_token('write');
         try {
             if ($name==='consultar_painel') $out=['today'=>date('Y-m-d'),'finance'=>cv_summary($token['user_id'],$data['month'] ?? date('Y-m')),'records'=>cv_list($token['user_id'])];
@@ -58,9 +58,9 @@ try {
             }
             $result=['content'=>[['type'=>'text','text'=>json_encode($out,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES)]]];
         } catch(DomainException $e) { $result=['content'=>[['type'=>'text','text'=>$e->getMessage()]],'isError'=>true]; }
-    } else cv_json(['jsonrpc'=>'2.0','id'=>$rpcId,'error'=>['code'=>-32601,'message'=>'Metodo desconhecido.']]);
+    } else cv_json(['jsonrpc'=>'2.0','id'=>$rpcId,'error'=>['code'=>-32601,'message'=>'Método desconhecido.']]);
     cv_json(['jsonrpc'=>'2.0','id'=>$rpcId,'result'=>$result]);
 } catch(DomainException $e) {
     if ($e->getCode()===401) header('WWW-Authenticate: Bearer resource_metadata="'.cv_url().'/metadata.php?resource=1"');
     cv_json(['jsonrpc'=>'2.0','id'=>$rpcId,'error'=>['code'=>-32000,'message'=>$e->getMessage()]],$e->getCode() ?: 400);
-} catch(Throwable $e) { cv_json(['jsonrpc'=>'2.0','id'=>$rpcId,'error'=>['code'=>-32603,'message'=>'Servico indisponivel.']],503); }
+} catch(Throwable $e) { cv_json(['jsonrpc'=>'2.0','id'=>$rpcId,'error'=>['code'=>-32603,'message'=>'Serviço indisponível.']],503); }

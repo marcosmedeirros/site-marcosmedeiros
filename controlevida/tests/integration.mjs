@@ -17,25 +17,28 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
   const password=randomBytes(20).toString('hex');
   const env={...process.env,CV_CONFIG:path.join(temp,'config.php'),CV_DATA_DIR:path.join(temp,'data'),CV_URL:base,CV_ADMIN_EMAIL:'test@example.com',CV_ADMIN_PASSWORD:password};
   const setup=spawnSync(php,['scripts/setup.php'],{env,encoding:'utf8'});assert.equal(setup.status,0,setup.stderr);
-  const server=spawn(php,['-S',`127.0.0.1:${port}`,'-t','.', 'scripts/router.php'],{env,stdio:['ignore','ignore','pipe'],windowsHide:true});
+  // Tests run from controlevida/; the document root is the site root, one level up.
+  const server=spawn(php,['-S',`127.0.0.1:${port}`,'-t','..','scripts/router.php'],{env,stdio:['ignore','ignore','pipe'],windowsHide:true});
   let serverLog='';server.stderr.on('data',d=>serverLog+=d);
   t.after(async()=>{server.kill();await new Promise(resolve=>server.once('exit',resolve));await rm(temp,{recursive:true,force:true});});
   let ready=false;for(let i=0;i<60;i++){try{const r=await fetch(base+'/api.php?action=session');if(r.ok){ready=true;break;}}catch{}await new Promise(r=>setTimeout(r,100));}
   assert.ok(ready,serverLog);
-  let cookie='',csrf='';
+  let cookie='',csrf='',lastSetCookie='';
   async function request(url,options={}){
     const res=await fetch(url,{redirect:'manual',...options,headers:{...(cookie?{Cookie:cookie}:{}),...options.headers}});
-    const set=res.headers.get('set-cookie');if(set)cookie=set.split(';')[0];return res;
+    const set=res.headers.get('set-cookie');if(set){lastSetCookie=set;cookie=set.split(';')[0];}return res;
   }
   async function api(action,body,headers={}){return request(`${base}/api.php?action=${action}`,{method:body===undefined?'GET':'POST',headers:{...(body===undefined?{}:{'Content-Type':'application/json','X-CSRF-Token':csrf}),...headers},body:body===undefined?undefined:JSON.stringify(body)});}
   let res=await api('bootstrap');assert.equal(res.status,401);
   const session=await(await api('session')).json();csrf=session.data.csrf;
   assert.equal((await api('login',{email:'test@example.com',password},{'X-CSRF-Token':'invalid'})).status,403);
   const login=await(await api('login',{email:'test@example.com',password})).json();assert.ok(login.ok);csrf=login.data.csrf;
+  assert.doesNotMatch(lastSetCookie,/expires=/i,'a plain sign-in ends with the browser session');
   await t.test('cookie and private response policy',async()=>{
     res=await api('bootstrap');assert.match(res.headers.get('cache-control'),/no-store/);assert.equal((await res.json()).data.records.length,0);
-    assert.equal((await fetch(origin+'/.controlevida.local.php')).status,404);
-    assert.equal((await fetch(base+'/server/core.php')).status,404);
+    for(const hidden of ['/.private/config.php','/.private/chave-instalacao.txt','/server/core.php','/server/install-key.php','/scripts/setup.php','/tests/integration.mjs','/docs/deploy.md','/package.json','/README.md','/.gitignore','/.htaccess'])assert.equal((await fetch(base+hidden)).status,404,hidden);
+    assert.equal((await fetch(base+'/install.php')).status,404,'the installer vanishes once configured');
+    res=await fetch(origin+'/');assert.equal(res.status,200);assert.match(await res.text(),/<html lang="pt-BR"/,'the portfolio keeps answering at the site root');
   });
   let task;
   await t.test('validated records, CSRF, ownership and concurrent edits',async()=>{
@@ -109,18 +112,50 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
   await t.test('direct database migration preserves legacy relationships and can be repeated',async()=>{
     const fixture=spawnSync(php,['tests/legacy-fixture.php'],{env,encoding:'utf8'});assert.equal(fixture.status,0,fixture.stderr);
     const first=spawnSync(php,['scripts/migrate-legacy.php'],{env,encoding:'utf8'});assert.equal(first.status,0,first.stderr);
-    const report=JSON.parse(first.stdout);assert.equal(report.finance.new_records,2);assert.equal(report.created.tasks,1);assert.equal(report.created.habits,1);assert.equal(report.created.events,1);
+    const report=JSON.parse(first.stdout);assert.equal(report.finance.new_records,2);assert.equal(report.created.tasks,2);assert.equal(report.created.habits,1);assert.equal(report.created.events,1);
+    assert.deepEqual(report.invalid.finances.map(x=>x.id),['legacy-11'],'a zeroed legacy row is reported, not fatal');
     const second=spawnSync(php,['scripts/migrate-legacy.php'],{env,encoding:'utf8'});assert.equal(second.status,0,second.stderr);
-    const repeated=JSON.parse(second.stdout);assert.equal(repeated.finance.new_records,0);assert.equal(repeated.skipped.tasks,1);
-    const backup=JSON.parse(await readFile(report.backup,'utf8'));assert.equal(backup.tables.finances.length,2);
+    const repeated=JSON.parse(second.stdout);assert.equal(repeated.finance.new_records,0);assert.equal(repeated.skipped.tasks,2);
+    const backup=JSON.parse(await readFile(report.backup,'utf8'));assert.equal(backup.tables.finances.length,3);
   });
   await t.test('OAuth authorization survives the sign-in redirect',async()=>{
     const fresh=await(await api('session')).json();csrf=fresh.data.csrf;
     const url=new URL(base+'/oauth.php');url.search=new URLSearchParams({route:'authorize',response_type:'code',client_id:clientId,redirect_uri:redirect,code_challenge:challenge,code_challenge_method:'S256',resource:base+'/mcp.php',scope:'read',state:'after-login'});
     res=await request(url);assert.equal(res.status,302);assert.equal(res.headers.get('location'),'/controlevida/');
-    const login=await(await api('login',{email:'test@example.com',password})).json();assert.ok(login.ok);csrf=login.data.csrf;
+    const login=await(await api('login',{email:'test@example.com',password,remember:true})).json();assert.ok(login.ok);csrf=login.data.csrf;
+    assert.match(lastSetCookie,/expires=/i,'"manter conectado" issues a persistent cookie');assert.equal(lastSetCookie.match(/CONTROLEVIDA=/g).length,1,'only one session cookie is sent');
     res=await request(base+'/');assert.equal(res.status,302);assert.match(res.headers.get('location'),/route=authorize/);
     res=await request(origin+res.headers.get('location'));assert.equal(res.status,200);assert.match(await res.text(),/Conectar assistente/);
+    const loose=(await(await api('bootstrap')).json()).data.records.find(r=>r.title==='No weekday');
+    assert.equal(loose.details.recurrence,'once');assert.equal(loose.details.area,'pessoal');
+    assert.equal((await(await api('migrate',{})).json()).data.finance.new_records,0,'the settings button can repeat the import safely');
+  });
+  await t.test('web installer is key-protected, one-time, and leaves nothing behind on failure',async()=>{
+    const temp2=await mkdtemp(path.join(tmpdir(),'controlevida-install-'));
+    const l2=createServer();await new Promise(resolve=>l2.listen(0,'127.0.0.1',resolve));const port2=l2.address().port;await new Promise(resolve=>l2.close(resolve));
+    const base2=`http://127.0.0.1:${port2}/controlevida`,config2=path.join(temp2,'config.php'),key='test-install-key';
+    const env2={...process.env,CV_CONFIG:config2,CV_DATA_DIR:path.join(temp2,'data'),CV_INSTALL_KEY_SHA256:createHash('sha256').update(key).digest('hex'),CV_INSTALL_DSN:'sqlite:'+path.join(temp2,'install.sqlite')};
+    const server2=spawn(php,['-S',`127.0.0.1:${port2}`,'-t','..','scripts/router.php'],{env:env2,stdio:['ignore','ignore','pipe'],windowsHide:true});
+    let log2='';server2.stderr.on('data',d=>log2+=d);
+    try{
+      let up=false;for(let i=0;i<60;i++){try{const r=await fetch(base2+'/install.php');if(r.ok){up=true;break;}}catch{}await new Promise(r=>setTimeout(r,100));}
+      assert.ok(up,log2);
+      let r=await fetch(base2+'/',{redirect:'manual'});assert.equal(r.status,302);assert.equal(r.headers.get('location'),'/controlevida/install.php');
+      assert.equal((await fetch(base2+'/api.php?action=session')).status,503,'nothing answers before setup');
+      const form={install_key:key,host:'localhost',database:'testdb',db_user:'tester',db_password:'',name:'Tester',email:'Owner@Example.com',password:'correct horse 42',password_confirm:'correct horse 42',import:'1'};
+      const submit=fields=>fetch(base2+'/install.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams(fields)});
+      const missing=file=>readFile(file).then(()=>false,()=>true);
+      r=await submit({...form,install_key:'guess'});assert.equal(r.status,403);assert.ok(await missing(config2));
+      r=await submit({...form,password_confirm:'different'});assert.equal(r.status,400);assert.ok(await missing(config2));
+      r=await submit({...form,password:'short',password_confirm:'short'});assert.equal(r.status,400);assert.ok(await missing(config2),'a rejected account leaves no configuration');
+      r=await submit(form);assert.equal(r.status,200);
+      const page=await r.text();assert.match(page,/Tudo pronto/);assert.match(page,/owner@example\.com/);assert.match(page,/Nenhum dado do app anterior/);
+      assert.doesNotMatch(await readFile(config2,'utf8'),/correct horse/,'the account password never reaches the config file');
+      assert.equal((await fetch(base2+'/install.php')).status,404);assert.equal((await submit(form)).status,404);
+      const s=await fetch(base2+'/api.php?action=session');const jar=s.headers.get('set-cookie').split(';')[0];const token=(await s.json()).data.csrf;
+      r=await fetch(base2+'/api.php?action=login',{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':token,Cookie:jar},body:JSON.stringify({email:'owner@example.com',password:'correct horse 42'})});assert.equal(r.status,200);
+      assert.doesNotMatch(log2,/Fatal error|Warning|Parse error/);
+    }finally{server2.kill();await new Promise(resolve=>server2.once('exit',resolve));await rm(temp2,{recursive:true,force:true});}
   });
   assert.doesNotMatch(serverLog,/Fatal error|Warning|Parse error/);
 });

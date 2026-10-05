@@ -2,8 +2,13 @@ Options -Indexes
 DirectoryIndex index.php
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  RewriteRule ^server(?:/|$) - [F,L]
-  RewriteRule ^(?:.*\.sqlite.*|.*\.log)$ - [F,L]
+  # Server code, development tooling and private data are never served.
+  RewriteRule ^(?:server|scripts|tests|docs|node_modules)(?:/|$) - [F,L]
+  # OAuth discovery for MCP clients that look under the app path.
+  RewriteRule ^\.well-known/(?:oauth-protected-resource|oauth-authorization-server|openid-configuration)(?:/.*)?$ metadata.php [L,QSA]
+  RewriteRule (?:^|/)\. - [F,L]
+  RewriteRule ^(?:package(?:-lock)?\.json|README\.md)$ - [F,L]
+  RewriteRule (?:\.sqlite|\.log$|(?:^|/)error_log$) - [F,L]
   RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
 </IfModule>
 <IfModule mod_headers.c>

@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
-require dirname(__DIR__).'/controlevida/server/records.php';
+require dirname(__DIR__).'/server/records.php';
 $snapshot=json_decode(file_get_contents($argv[1] ?? ''),true,64,JSON_THROW_ON_ERROR);
 $uid=cv_query('SELECT id FROM cv_users')->fetchColumn();$sum=0;
 foreach($snapshot['transactions'] as $tx){

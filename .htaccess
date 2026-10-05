@@ -4,14 +4,8 @@ Options -Indexes
 # www -> domínio principal (evita conteúdo duplicado no Google)
 <IfModule mod_rewrite.c>
   RewriteEngine On
-  # Private hub, OAuth discovery, and retirement of the old .page application.
-  RewriteRule ^(?:scripts|tests|node_modules|\.private)(?:/|$) - [F,L]
-  RewriteRule ^\.(?!well-known/) - [F,L]
-  RewriteRule ^\.well-known/(?:oauth-protected-resource|oauth-authorization-server)(?:/.*)?$ controlevida/metadata.php [L,QSA]
-  RewriteCond %{HTTP_HOST} ^(?:www\.)?marcosmedeiros\.page$ [NC]
-  RewriteRule ^$ /controlevida/ [R=302,L]
-  RewriteCond %{HTTP_HOST} ^(?:www\.)?marcosmedeiros\.page$ [NC]
-  RewriteRule ^(?:api[^/]*\.php|app_api\.php|mcp\.php|ai_chat\.php|calendar_feed\.php|config\.php|secrets\.php|indexvelho\.php|app(?:\.php|\.html|/.*)?|includes/.*|mcp-server/.*|php_error\.log)$ - [F,L]
+  # Controle Vida: descoberta OAuth do MCP (nenhuma outra rota do site passa por aqui)
+  RewriteRule ^\.well-known/oauth-(?:protected-resource|authorization-server)(?:/.*)?$ controlevida/metadata.php [L,QSA]
   RewriteCond %{HTTP_HOST} ^www\.(.+)$ [NC]
   RewriteRule ^ https://%1%{REQUEST_URI} [L,R=301]
 </IfModule>

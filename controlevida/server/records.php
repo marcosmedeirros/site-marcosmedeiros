@@ -5,22 +5,22 @@ require_once __DIR__ . '/core.php';
 const CV_KINDS = ['transaction','task','event','habit','workout','meal','note','goal'];
 
 function cv_text($value, int $max = 1000): string {
-    if (!is_string($value) || mb_strlen($value) > $max) cv_fail('Texto invalido ou muito longo.');
+    if (!is_string($value) || mb_strlen($value) > $max) cv_fail('Texto inválido ou muito longo.');
     return trim($value);
 }
 function cv_day($value, bool $optional = false): string {
     if ($optional && ($value === '' || $value === null)) return '';
-    if (!is_string($value) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) cv_fail('Data invalida.');
+    if (!is_string($value) || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $value)) cv_fail('Data inválida.');
     $d = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
-    if (!$d || $d->format('Y-m-d') !== $value || $value < '1900-01-01' || $value > '2200-12-31') cv_fail('Data invalida.');
+    if (!$d || $d->format('Y-m-d') !== $value || $value < '1900-01-01' || $value > '2200-12-31') cv_fail('Data inválida.');
     return $value;
 }
 function cv_int($value, int $min, int $max): int {
-    if (filter_var($value, FILTER_VALIDATE_INT) === false || $value < $min || $value > $max) cv_fail('Numero fora do intervalo permitido.');
+    if (filter_var($value, FILTER_VALIDATE_INT) === false || $value < $min || $value > $max) cv_fail('Número fora do intervalo permitido.');
     return (int)$value;
 }
 function cv_enum($value, array $allowed): string {
-    if (!is_string($value) || !in_array($value, $allowed, true)) cv_fail('Opcao invalida.');
+    if (!is_string($value) || !in_array($value, $allowed, true)) cv_fail('Opção inválida.');
     return $value;
 }
 function cv_record(array $row): array {
@@ -31,7 +31,7 @@ function cv_record(array $row): array {
 }
 function cv_get(string $user, string $id): array {
     $row = cv_query('SELECT * FROM cv_records WHERE user_id=? AND id=?', [$user,$id])->fetch();
-    if (!$row) cv_fail('Registro nao encontrado.', 404);
+    if (!$row) cv_fail('Registro não encontrado.', 404);
     return cv_record($row);
 }
 function cv_list(string $user, array $filter = []): array {
@@ -51,7 +51,7 @@ function cv_details(string $kind, array $d, array $old = []): array {
         $out['recurrence'] = cv_enum($d['recurrence'] ?? 'once',['once','daily','weekly','monthly']);
         $out['month_day'] = cv_int($d['month_day'] ?? 1,1,31);
         $weekdays = $d['weekdays'] ?? [];
-        if (!is_array($weekdays) || count($weekdays) > 7) cv_fail('Dias da semana invalidos.');
+        if (!is_array($weekdays) || count($weekdays) > 7) cv_fail('Dias da semana inválidos.');
         $out['weekdays'] = array_values(array_unique(array_map(fn($n) => cv_int($n,1,7), $weekdays)));
         if ($out['recurrence'] === 'weekly' && !$out['weekdays']) cv_fail('Escolha ao menos um dia da semana.');
         $out['completed_dates'] = $old['completed_dates'] ?? [];
@@ -60,13 +60,13 @@ function cv_details(string $kind, array $d, array $old = []): array {
     if ($kind === 'habit') $out['size'] = cv_enum($d['size'] ?? 'habit',['habit','mini']);
     if (in_array($kind,['event','meal','workout','habit','task'],true)) {
         $time = cv_text($d['time'] ?? '',5);
-        if ($time !== '' && !preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/',$time)) cv_fail('Horario invalido.');
+        if ($time !== '' && !preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/',$time)) cv_fail('Horário inválido.');
         $out['time'] = $time;
     }
     if ($kind === 'event') {
         $out['location'] = cv_text($d['location'] ?? '',200);
         $out['end_time'] = cv_text($d['end_time'] ?? '',5);
-        if ($out['end_time'] !== '' && (!preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/',$out['end_time']) || $out['end_time'] <= $out['time'])) cv_fail('O fim deve ser depois do inicio.');
+        if ($out['end_time'] !== '' && (!preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/',$out['end_time']) || $out['end_time'] <= $out['time'])) cv_fail('O fim deve ser depois do início.');
     }
     if ($kind === 'meal') {
         $out['meal'] = cv_enum($d['meal'] ?? 'almoco',['cafe','almoco','lanche','jantar','outro']);
@@ -85,11 +85,11 @@ function cv_save(string $user, array $input, string $source = 'web'): array {
     $old = isset($input['id']) ? cv_get($user,$id) : null;
     if ($old && $old['status'] === 'archived') cv_fail('Restaure o registro antes de editar.');
     $kind = cv_enum($input['kind'] ?? '',CV_KINDS);
-    if ($old && $old['kind'] !== $kind) cv_fail('O tipo do registro nao pode mudar.');
+    if ($old && $old['kind'] !== $kind) cv_fail('O tipo do registro não pode mudar.');
     $title = cv_text($input['title'] ?? '',200);
-    if ($title === '') cv_fail('Preencha o titulo.');
+    if ($title === '') cv_fail('Preencha o título.');
     $day = cv_day($input['day'] ?? date('Y-m-d'), in_array($kind,['task','note','goal','habit','workout'],true));
-    if (!is_array($input['details'] ?? [])) cv_fail('Detalhes invalidos.');
+    if (!is_array($input['details'] ?? [])) cv_fail('Detalhes inválidos.');
     $details = cv_details($kind,$input['details'] ?? [],$old['details'] ?? []);
     $status = $old['status'] ?? 'open';
     if ($kind === 'goal') $status = $details['progress'] === 100 ? 'done' : 'open';
@@ -118,7 +118,7 @@ function cv_mark(string $user, array $input, string $source = 'web', bool $archi
         elseif (!$input['archived'] && $status === 'archived') { $status=$details['_status_before_archive'] ?? 'open'; unset($details['_status_before_archive']); }
     }
     else {
-        if (!in_array($old['kind'],['task','habit','workout','event'],true) || $status === 'archived') cv_fail('Este registro nao pode ser concluido.');
+        if (!in_array($old['kind'],['task','habit','workout','event'],true) || $status === 'archived') cv_fail('Este registro não pode ser concluído.');
         if (!is_bool($input['done'] ?? null)) cv_fail('Informe done como verdadeiro ou falso.');
         $day = cv_day($input['day'] ?? date('Y-m-d'));
         if (($details['recurrence'] ?? 'once') === 'once') $status = $input['done'] ? 'done' : 'open';
@@ -139,7 +139,7 @@ function cv_mark(string $user, array $input, string $source = 'web', bool $archi
 }
 
 function cv_summary(string $user, string $month): array {
-    if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/',$month)) cv_fail('Mes invalido.');
+    if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/',$month)) cv_fail('Mês inválido.');
     $all = cv_list($user); $settings = cv_settings($user);
     $income = 0; $expense = 0; $balance = $settings['initial_balance_cents'];
     foreach ($all as $r) if ($r['kind'] === 'transaction') {
@@ -152,22 +152,22 @@ function cv_summary(string $user, string $month): array {
 }
 
 function cv_import(string $user, array $snapshot): array {
-    if (($snapshot['format'] ?? '') !== 'controlevida-legacy-finance-v1' || !is_array($snapshot['transactions'] ?? null)) cv_fail('Formato de importacao invalido.');
-    if (count($snapshot['transactions']) > 20000) cv_fail('Limite de 20 mil lancamentos por arquivo.');
+    if (($snapshot['format'] ?? '') !== 'controlevida-legacy-finance-v1' || !is_array($snapshot['transactions'] ?? null)) cv_fail('Formato de importação inválido.');
+    if (count($snapshot['transactions']) > 20000) cv_fail('Limite de 20 mil lançamentos por arquivo.');
     $settings = cv_settings($user); $count = 0; $skipped = 0;
     cv_db()->beginTransaction();
     try {
         foreach ($snapshot['transactions'] as $tx) {
             $legacy = cv_text((string)($tx['id'] ?? ''),100);
-            if ($legacy === '') cv_fail('Lancamento sem identificador.');
+            if ($legacy === '') cv_fail('Lançamento sem identificador.');
             $id = md5('marcosmedeiros.page:fin_transactions:' . $user . ':' . $legacy);
             if (cv_query('SELECT id FROM cv_records WHERE id=?',[$id])->fetchColumn()) { $skipped++; continue; }
             $amount = $tx['amount'] ?? null;
-            if (!preg_match('/^\d+(\.\d{1,2})?$/',(string)$amount)) cv_fail('Valor financeiro invalido na importacao.');
+            if (!preg_match('/^\d+(\.\d{1,2})?$/',(string)$amount)) cv_fail('Valor financeiro inválido na importação.');
             $parts = explode('.',(string)$amount);
             $cents = cv_int((int)$parts[0] * 100 + (int)str_pad($parts[1] ?? '',2,'0'),1,99999999999);
             $d = cv_details('transaction',['direction'=>$tx['type'] ?? '', 'amount_cents'=>$cents,'category'=>($tx['cat_name'] ?? '') ?: 'Outros','notes'=>'']);
-            $title = cv_text(($tx['description'] ?? '') ?: 'Lancamento importado',200);
+            $title = cv_text(($tx['description'] ?? '') ?: 'Lançamento importado',200);
             $day = cv_day($tx['transaction_date'] ?? '');
             cv_query('INSERT INTO cv_records (id,user_id,kind,title,day,status,details,revision,created_at,updated_at) VALUES (?,?,?,?,?,?,?,1,?,?)',[$id,$user,'transaction',$title,$day,'open',json_encode($d,JSON_UNESCAPED_UNICODE),cv_now(),cv_now()]);
             $count++;
