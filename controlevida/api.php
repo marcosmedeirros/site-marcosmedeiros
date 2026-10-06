@@ -33,6 +33,14 @@ try {
         $data['categories'] = array_values(array_unique(array_filter(array_map(fn($v)=>cv_text($v,80),$input['categories']))));
         cv_save_settings($uid,$data);
     }
+    elseif ($action === 'calendar' && $post) {
+        $data = cv_settings($uid);
+        if (!is_bool($input['enable'] ?? null)) cv_fail('Informe enable como verdadeiro ou falso.');
+        if ($input['enable']) { if (empty($data['calendar_token'])) $data['calendar_token'] = cv_secret(); }
+        else unset($data['calendar_token']);
+        cv_save_settings($uid,$data);
+        cv_audit($uid,$input['enable'] ? 'calendar.enable' : 'calendar.revoke','','web');
+    }
     elseif ($action === 'connections') $data = cv_query('SELECT id,name,scope,created_at,expires_at FROM cv_tokens WHERE user_id=? ORDER BY created_at DESC',[$uid])->fetchAll();
     elseif ($action === 'revoke' && $post) { cv_query('DELETE FROM cv_tokens WHERE id=? AND user_id=?',[cv_text($input['id'] ?? '',40),$uid]); $data = ['revoked'=>true]; }
     elseif ($action === 'audit') $data = cv_query('SELECT action,source,happened_at FROM cv_audit WHERE user_id=? ORDER BY happened_at DESC LIMIT 50',[$uid])->fetchAll();

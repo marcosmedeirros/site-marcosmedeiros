@@ -10,7 +10,8 @@ Aplicação PHP + PDO (MySQL em produção, SQLite nos testes e na prévia local
 - Tarefas em um quadro da semana, uma coluna por dia (mais "Sem dia" para o que ainda não tem lugar), com categoria por tarefa e troca de dia arrastando pela alça ou tocando nela para escolher da lista.
 - Eventos, hábitos, lançamentos, treinos, refeições, notas e metas, com repetições diárias, semanais e mensais, conclusões por data, histórico e arquivo recuperável. Metas são apenas concluídas ou não.
 - Finanças organizadas por mês, não por data: o lançamento guarda o mês (dia 01), o formulário já abre no mês atual com um atalho para o anterior e a descrição é opcional — sem ela vale a categoria. Valores em centavos inteiros, categorias, CSV e exportação dos próprios dados.
-- Agenda mensal com exportação ICS. Google Agenda, notificações push e widgets nativos ainda não existem e não são apresentados como conectados.
+- Agenda mensal com exportação ICS e assinatura de calendário: um endereço com token revogável publica eventos, tarefas e treinos (com repetição como RRULE) para o calendário do celular e para o Google Agenda, em leitura. Dinheiro, refeições, notas e hábitos nunca entram nesse feed.
+- Notificações push e widgets nativos ainda não existem e não são apresentados como conectados.
 - Login por sessão com senha em hash, opção "manter conectado" (60 dias), CSRF, limite de tentativas, validação no servidor, revisões contra sobrescrita concorrente e auditoria.
 - MCP HTTP com OAuth, PKCE S256, consentimento, permissões de leitura/escrita, tokens curtos, rotação e revogação.
 - Visual editorial: fundo preto, títulos em serifada, azul nos detalhes, divisões por fios no lugar de caixas, e atalhos na barra inferior no celular.
@@ -19,7 +20,7 @@ Aplicação PHP + PDO (MySQL em produção, SQLite nos testes e na prévia local
 
 | Caminho | Conteúdo |
 | --- | --- |
-| `index.php`, `api.php`, `mcp.php`, `oauth.php`, `metadata.php` | Páginas e endpoints públicos |
+| `index.php`, `api.php`, `mcp.php`, `oauth.php`, `metadata.php`, `calendar.php` | Páginas e endpoints públicos |
 | `install.php` | Instalador web de uso único (some depois de configurado) |
 | `assets/` | Interface (CSS, JS, ícones Lucide) |
 | `server/` | Código do servidor; nunca servido |
@@ -44,6 +45,12 @@ Requisitos: PHP 8.0+ com PDO, `pdo_sqlite` (testes), `pdo_mysql` (produção) e 
 ## Publicação e migração
 
 Veja [docs/deploy.md](docs/deploy.md).
+
+## Assinatura de calendário
+
+Em Ajustes → Integrações, o botão gera `calendar.php?t=<token>`. Clientes de calendário não têm onde fazer login, então esse token na URL é a credencial inteira: ele é aleatório, longo, nunca indexado e revogável no mesmo lugar. Quem tiver o endereço vê a agenda, por isso ele deve ser tratado como senha.
+
+O feed traz eventos, tarefas e treinos não arquivados — repetições viram `RRULE`, horários saem em UTC e registros avulsos com mais de 30 dias ficam de fora. Lançamentos, refeições, notas e hábitos não entram.
 
 ## MCP
 

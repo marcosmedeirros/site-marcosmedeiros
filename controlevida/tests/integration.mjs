@@ -70,6 +70,28 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
     // Put the hub back as it was so the later counts stay exact.
     for(const r of [tx,reopened])assert.ok((await(await api('archive',{id:r.id,revision:r.revision,archived:true})).json()).ok);
   });
+  await t.test('calendar feed is off by default, token-gated and revocable',async()=>{
+    assert.equal((await fetch(`${base}/calendar.php`)).status,404,'no feed without a token');
+    assert.equal((await fetch(`${base}/calendar.php?t=${'a'.repeat(43)}`)).status,404,'a wrong token looks like nothing');
+    // Something dated, something repeating and something that must stay out of the feed.
+    const evt=(await(await api('save',{kind:'event',title:'Reunião PNIP',day:'2026-10-07',details:{time:'09:00',end_time:'10:00',location:'Online'}})).json()).data;
+    const chore=(await(await api('save',{kind:'task',title:'Varrer, passar & limpar',day:'',details:{recurrence:'weekly',weekdays:[1,3],area:'casa'}})).json()).data;
+    const secret=(await(await api('save',{kind:'transaction',title:'Salário',day:'2026-10-01',details:{direction:'income',amount_cents:500000,category:'Trabalho'}})).json()).data;
+    const token=(await(await api('calendar',{enable:true})).json()).data.calendar_token;
+    assert.match(token,/^[A-Za-z0-9_-]{30,}$/);
+    const res=await fetch(`${base}/calendar.php?t=${token}`);
+    assert.equal(res.status,200);assert.match(res.headers.get('content-type'),/text\/calendar/);assert.match(res.headers.get('cache-control'),/no-store/);
+    const ics=await res.text();
+    assert.match(ics,/^BEGIN:VCALENDAR/);assert.match(ics,/END:VCALENDAR\r\n$/);
+    assert.match(ics,/SUMMARY:Reunião PNIP/);assert.match(ics,/DTSTART:20261007T120000Z/,'09:00 in São Paulo is 12:00 UTC');
+    assert.match(ics,/SUMMARY:Varrer\\, passar & limpar/,'commas are escaped, the rest is literal');
+    assert.match(ics,/RRULE:FREQ=WEEKLY;BYDAY=MO,WE/);
+    assert.doesNotMatch(ics,/Salário|500000/,'money never reaches a feed that lives in a URL');
+    assert.equal(ics.split('\r\n').every(l=>Buffer.byteLength(l)<=75),true,'every line is folded to 75 octets');
+    await api('calendar',{enable:false});
+    assert.equal((await fetch(`${base}/calendar.php?t=${token}`)).status,404,'revoking kills the link');
+    for(const r of [evt,chore,secret])await api('archive',{id:r.id,revision:r.revision,archived:true});
+  });
   await t.test('finance import is atomic, exact and idempotent',async()=>{
     const snapshot={format:'controlevida-legacy-finance-v1',from:'2026-01-01',to:'2026-12-31',initial_balance_cents:10000,categories:[{name:'Casa'}],transactions:[{id:1,amount:'19.99',type:'expense',description:'House',cat_name:'Casa',transaction_date:'2026-10-05'},{id:2,amount:'50.00',type:'income',description:'Income',cat_name:'Trabalho',transaction_date:'2026-10-05'}]};
     let data=(await(await api('import',snapshot)).json()).data;assert.equal(data.new_records,2);
