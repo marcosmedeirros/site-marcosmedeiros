@@ -19,7 +19,9 @@ const days = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 const S = {records:[],settings:{categories:[]},today:localDate(),day:localDate(),month:localDate().slice(0,7),view:'today',csrf:'',search:'',filter:'all',user:null,editing:null,archived:[],busy:false};
 let toastTimer;
 function toast(message) { $('#toast').textContent=message; $('#toast').hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('#toast').hidden=true,4200); }
-function status(state) { const el=$('#connection-status'); el.className=`connection-status ${state}`; el.innerHTML=`<span></span>${({saving:'Salvando...',offline:'Sem conexão',error:'Falha na sincronização'})[state] || 'Sincronizado'}`; }
+// Only visible while something is wrong or in flight; a click retries.
+function status(state) { const el=$('#connection-status'); el.className=`connection-status ${state}`; el.hidden=!state; el.innerHTML=`<span></span>${({saving:'Salvando...',offline:'Sem conexão',error:'Falha na sincronização · tentar de novo'})[state] || 'Sincronizado'}`; }
+function setMenu(open) { $('#shell').classList.toggle('menu-open',open); const more=$('[data-menu]'); if(more)more.setAttribute('aria-expanded',String(open)); }
 async function api(action, body, params={}) {
   const url = new URL('api.php',location.href); url.searchParams.set('action',action);
   for (const [k,v] of Object.entries(params)) url.searchParams.set(k,v);
@@ -130,7 +132,7 @@ function settingsView() {
 const renderers={today:dashboard,tasks:tasksView,calendar:calendarView,habits:habitsView,finance:financeView,workouts:workoutsView,meals:mealsView,notes:notesView,history:historyView,settings:settingsView};
 function render() {
   if(!S.user)return;
-  $('#breadcrumb').textContent=views[S.view][0];
+  document.title=`${views[S.view][0]} · Controle Vida`;
   $('#navigation').innerHTML=Object.entries(views).filter(([k])=>k!=='settings').map(([key,[name,i]])=>`<button class="nav-item ${key===S.view?'active':''}" data-view="${key}" ${key===S.view?'aria-current="page"':''}>${icon(i)}<span>${name}</span></button>`).join('');
   $('#bottom-nav').innerHTML=['today','tasks','finance','habits'].map(key=>`<button class="bottom-item ${key===S.view?'active':''}" data-view="${key}" ${key===S.view?'aria-current="page"':''}>${icon(views[key][1])}<span>${views[key][0]}</span></button>`).join('')+`<button class="bottom-item ${['today','tasks','finance','habits'].includes(S.view)?'':'active'}" data-menu aria-label="Mais áreas">${icon('menu')}<span>Mais</span></button>`;
   $('#main').innerHTML=renderers[S.view]();
@@ -138,7 +140,7 @@ function render() {
   icons();
   if(S.view==='settings')loadConnections();
 }
-function navigate(view) { if(!views[view])view='today'; S.view=view; S.search='';S.filter=view==='workouts'?'today':'all';if(view!=='calendar')S.day=S.today; location.hash=view; $('#shell').classList.remove('menu-open');$('#menu-button').setAttribute('aria-expanded','false');render(); }
+function navigate(view) { if(!views[view])view='today'; S.view=view; S.search='';S.filter=view==='workouts'?'today':'all';if(view!=='calendar')S.day=S.today; location.hash=view; setMenu(false);render(); }
 const input = (name,label,type,value='',extra='') => `<label>${label}<input name="${name}" type="${type}" value="${esc(value)}" ${extra}></label>`;
 const select = (name,label,options,value) => `<label>${label}<select name="${name}">${Object.entries(options).map(([v,l])=>`<option value="${v}" ${v===value?'selected':''}>${l}</option>`).join('')}</select></label>`;
 function openEditor(kind,id,defaults={}) {
@@ -198,7 +200,7 @@ document.addEventListener('click',async event=>{
  const b=event.target.closest('button,a'); if(!b)return;
  try {
   if(b.dataset.view)navigate(b.dataset.view);
-  if(b.hasAttribute('data-menu')){$('#shell').classList.add('menu-open');$('#menu-button').setAttribute('aria-expanded','true');}
+  if(b.hasAttribute('data-menu'))setMenu(!$('#shell').classList.contains('menu-open'));
   if(b.dataset.new)openEditor(b.dataset.new,null,{meal:b.dataset.meal,area:b.dataset.area});
   if(b.dataset.edit){const r=S.records.find(r=>r.id===b.dataset.edit);if(r)openEditor(r.kind,r.id);}
   if(b.dataset.check)await mark(b.dataset.check,b.dataset.day||S.day,b);
@@ -246,10 +248,9 @@ if($('#login-form')){
  $('#login-form').addEventListener('submit',async event=>{event.preventDefault();const button=$('[type=submit]',event.target);button.disabled=true;$('#login-error').textContent='';try{const fd=new FormData(event.target);const data=await api('login',{email:fd.get('email'),password:fd.get('password'),remember:fd.get('remember')==='on'});S.csrf=data.csrf;$('#password').value='';location.reload();}catch(e){$('#login-error').textContent=e.message;}finally{button.disabled=false;}});
  $('#show-password').addEventListener('click',()=>{const password=$('#password');password.type=password.type==='password'?'text':'password';$('#show-password').setAttribute('aria-label',password.type==='password'?'Mostrar senha':'Ocultar senha');});
  $('#logout').addEventListener('click',async()=>{try{await api('logout',{});showLogin();location.reload();}catch(e){toast(e.message);}});
- $('#refresh').addEventListener('click',()=>refresh().catch(e=>toast(e.message)));
+ $('#connection-status').addEventListener('click',()=>refresh().catch(e=>toast(e.message)));
  $('#quick-add').addEventListener('click',()=>{$('#quick-options').innerHTML=Object.entries(kinds).map(([k,[l,i]])=>`<button data-new="${k}">${icon(i)}${l}${icon('chevron-right')}</button>`).join('');$('#quick-menu').showModal();icons();});
- $('#menu-button').addEventListener('click',()=>{const open=$('#shell').classList.toggle('menu-open');$('#menu-button').setAttribute('aria-expanded',String(open));});
- $('#menu-backdrop').addEventListener('click',()=>{$('#shell').classList.remove('menu-open');$('#menu-button').setAttribute('aria-expanded','false');});
+ $('#menu-backdrop').addEventListener('click',()=>setMenu(false));
  window.addEventListener('hashchange',()=>{const view=location.hash.slice(1);if(views[view]&&view!==S.view)navigate(view);});
  window.addEventListener('offline',()=>status('offline'));
  window.addEventListener('online',()=>{if(S.user)refresh().catch(e=>toast(e.message));});
