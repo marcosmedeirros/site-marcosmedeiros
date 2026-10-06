@@ -21,7 +21,6 @@ try {
             if (!$p || empty($p['host']) || isset($p['fragment']) || isset($p['user']) || !in_array($p['scheme'] ?? '',['https','http'],true)) cv_fail('Redirecionamento inválido.');
             if ($p['scheme']==='http' && !in_array($p['host'],['127.0.0.1','localhost','[::1]'],true)) cv_fail('O redirecionamento requer HTTPS.');
         }
-        if (($in['token_endpoint_auth_method'] ?? 'none')!=='none') cv_fail('Este servidor usa clientes públicos com PKCE.');
         $name=cv_text($in['client_name'] ?? 'Assistente conectado',100);
         $id=cv_secret();
         cv_query('INSERT INTO cv_clients (id,name,redirects,created_at) VALUES (?,?,?,?)',[$id,$name,json_encode($uris),time()]);
@@ -31,7 +30,8 @@ try {
         if ($_SERVER['REQUEST_METHOD']!=='POST') cv_fail('Método não permitido.',405);
         cv_limit('oauth.token',80,900);
         $in=$_POST;
-        if (($in['resource'] ?? '')!==cv_resource()) cv_fail('Recurso inválido.');
+        // Resource indicators are optional here: a client that omits one gets this server's.
+        if (($in['resource'] ?? cv_resource())!==cv_resource()) cv_fail('Recurso inválido.');
         $client=cv_query('SELECT * FROM cv_clients WHERE id=?',[$in['client_id'] ?? ''])->fetch();
         if (!$client) cv_fail('Cliente inválido.');
         cv_db()->beginTransaction();
@@ -58,7 +58,7 @@ try {
     $in=$_SERVER['REQUEST_METHOD']==='POST' ? ($_SESSION['oauth_pending'] ?? []) : $_GET;
     $client=cv_query('SELECT * FROM cv_clients WHERE id=?',[$in['client_id'] ?? ''])->fetch();
     if (!$client || !in_array($in['redirect_uri'] ?? '',json_decode($client['redirects'],true),true)) cv_fail('Cliente ou redirecionamento inválido.');
-    if (($in['resource'] ?? '')!==cv_resource() || ($in['response_type'] ?? '')!=='code' || ($in['code_challenge_method'] ?? '')!=='S256' || !preg_match('/^[A-Za-z0-9_-]{43}$/',$in['code_challenge'] ?? '')) cv_fail('Solicitação OAuth inválida.');
+    if (($in['resource'] ?? cv_resource())!==cv_resource() || ($in['response_type'] ?? '')!=='code' || ($in['code_challenge_method'] ?? '')!=='S256' || !preg_match('/^[A-Za-z0-9_-]{43}$/',$in['code_challenge'] ?? '')) cv_fail('Solicitação OAuth inválida.');
     $scopes=array_unique(explode(' ',$in['scope'] ?? 'read write'));
     if (array_diff($scopes,['read','write']) || !in_array('read',$scopes,true)) cv_fail('Permissões inválidas.');
     if (!is_string($in['state'] ?? '') || strlen($in['state'] ?? '')>1024) cv_fail('Estado inválido.');

@@ -6,13 +6,14 @@ Aplicação PHP + PDO (MySQL em produção, SQLite nos testes e na prévia local
 
 ## O que está implementado
 
-- Hoje: tarefas pendentes, agenda, tarefas da casa, hábitos, mini-hábitos, resumo financeiro, treinos e refeições.
-- Tarefas, eventos, hábitos, lançamentos, treinos, refeições, notas e metas, com repetições diárias, semanais e mensais, conclusões por data, histórico e arquivo recuperável.
-- Finanças em centavos inteiros, categorias, filtros mensais, CSV e exportação dos próprios dados.
+- Hoje: tarefas pendentes, agenda, tarefas da casa, hábitos, resumo financeiro, treinos e refeições.
+- Tarefas em um quadro da semana, uma coluna por dia (mais "Sem dia" para o que ainda não tem lugar), com categoria por tarefa e troca de dia arrastando pela alça ou tocando nela para escolher da lista.
+- Eventos, hábitos, lançamentos, treinos, refeições, notas e metas, com repetições diárias, semanais e mensais, conclusões por data, histórico e arquivo recuperável. Metas são apenas concluídas ou não.
+- Finanças organizadas por mês, não por data: o lançamento guarda o mês (dia 01), o formulário já abre no mês atual com um atalho para o anterior e a descrição é opcional — sem ela vale a categoria. Valores em centavos inteiros, categorias, CSV e exportação dos próprios dados.
 - Agenda mensal com exportação ICS. Google Agenda, notificações push e widgets nativos ainda não existem e não são apresentados como conectados.
 - Login por sessão com senha em hash, opção "manter conectado" (60 dias), CSRF, limite de tentativas, validação no servidor, revisões contra sobrescrita concorrente e auditoria.
 - MCP HTTP com OAuth, PKCE S256, consentimento, permissões de leitura/escrita, tokens curtos, rotação e revogação.
-- Tema escuro com fundo preto e atalhos na barra inferior no celular.
+- Visual editorial: fundo preto, títulos em serifada, azul nos detalhes, divisões por fios no lugar de caixas, e atalhos na barra inferior no celular.
 
 ## Estrutura
 
@@ -48,4 +49,4 @@ Veja [docs/deploy.md](docs/deploy.md).
 
 Endereço: `https://marcosmedeiros.site/controlevida/mcp.php` (também em Ajustes e conexões). As ferramentas consultam, criam/atualizam, concluem e arquivam registros com a mesma validação da interface. Alimentação é registrada de forma descritiva; não há cálculo de calorias, metas de peso nem prescrição.
 
-Para conectar um assistente, adicione o endereço como conector MCP personalizado com OAuth; o próprio servidor faz o registro dinâmico do cliente e pede seu consentimento. Cada conexão pode ser revogada em Ajustes.
+Para conectar um assistente (Claude, ChatGPT ou outro), adicione o endereço como conector MCP personalizado com OAuth; o próprio servidor faz o registro dinâmico do cliente e pede seu consentimento. O endpoint autentica só por token Bearer, que o navegador não envia sozinho, então não restringe a origem de quem chama e aceita qualquer revisão datada do protocolo. Cada conexão pode ser revogada em Ajustes.

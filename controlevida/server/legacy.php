@@ -24,11 +24,6 @@ function cv_legacy_recurrence(array $r, string $default): array {
     if (($rec === 'weekly' && ($n < 1 || $n > 7)) || ($rec === 'monthly' && ($n < 1 || $n > 31))) $rec = $default;
     return ['recurrence' => $rec, 'weekdays' => $rec === 'weekly' ? [$n] : [], 'month_day' => $rec === 'monthly' ? $n : 1];
 }
-function cv_legacy_goal_progress(array $r): int {
-    $target = (float)($r['target_amount'] ?? 0);
-    if (!empty($r['status'])) return 100;
-    return $target > 0 ? max(0, min(100, (int)round((float)($r['current_amount'] ?? 0) / $target * 100))) : 0;
-}
 function cv_legacy_meal(string $label): string {
     foreach (['caf' => 'cafe', 'almo' => 'almoco', 'lanch' => 'lanche', 'jant' => 'jantar'] as $needle => $meal) if (mb_stripos($label, $needle) !== false) return $meal;
     return 'outro';
@@ -57,12 +52,12 @@ function cv_legacy_task(string $user, array &$report, array $r, array $doneDates
 }
 function cv_legacy_habit(string $user, array &$report, array $r): void {
     $dates = json_decode((string)($r['checked_dates'] ?? '') ?: '[]', true);
-    cv_legacy_put($user, $report, 'habits', $r['id'], 'habit', $r['name'] ?? '', '', ['completed_dates' => cv_legacy_days($dates), 'size' => 'habit'] + cv_legacy_recurrence($r, 'daily'));
+    cv_legacy_put($user, $report, 'habits', $r['id'], 'habit', $r['name'] ?? '', '', ['completed_dates' => cv_legacy_days($dates)] + cv_legacy_recurrence($r, 'daily'));
 }
 function cv_legacy_goal(string $user, array &$report, array $r): void {
     $target = (float)($r['target_amount'] ?? 0);
     $notes = $target > 0 ? 'Meta financeira anterior: R$ ' . number_format($target, 2, ',', '.') . '; acumulado: R$ ' . number_format((float)($r['current_amount'] ?? 0), 2, ',', '.') . '.' : '';
-    cv_legacy_put($user, $report, 'goals', $r['id'], 'goal', $r['title'] ?? '', $r['deadline'] ?? '', ['progress' => cv_legacy_goal_progress($r), 'notes' => $notes], !empty($r['status']) ? 'done' : 'open');
+    cv_legacy_put($user, $report, 'goals', $r['id'], 'goal', $r['title'] ?? '', $r['deadline'] ?? '', ['notes' => $notes], !empty($r['status']) ? 'done' : 'open');
 }
 function cv_legacy_plan(string $user, array &$report, array $r): void {
     if (($r['type'] ?? 'rest') === 'rest' && empty($r['name'])) return;
@@ -154,7 +149,7 @@ function cv_migrate_legacy(string $user, ?PDO $source = null, int $legacyUser = 
         }
         foreach ($raw['activities'] as $r) if (!isset($fromActivities[$r['id']])) cv_legacy_put($user, $report, 'activities', $r['id'], 'task', $r['title'] ?? '', $r['day_date'] ?? '', ['recurrence' => 'once'], !empty($r['status']) ? 'done' : 'open');
         foreach ($raw['habits'] as $r) cv_legacy_habit($user, $report, $r);
-        foreach ($raw['routine_items'] as $r) cv_legacy_put($user, $report, 'routine_items', $r['id'], 'habit', $r['activity'] ?? '', '', ['recurrence' => 'daily', 'size' => 'mini', 'time' => substr((string)($r['routine_time'] ?? ''), 0, 5)]);
+        foreach ($raw['routine_items'] as $r) cv_legacy_put($user, $report, 'routine_items', $r['id'], 'habit', $r['activity'] ?? '', '', ['recurrence' => 'daily', 'time' => substr((string)($r['routine_time'] ?? ''), 0, 5)]);
         foreach ($raw['events'] as $r) cv_legacy_put($user, $report, 'events', $r['id'], 'event', $r['title'] ?? '', $r['start_date'] ?? '', ['time' => substr((string)($r['start_date'] ?? ''), 11, 5), 'notes' => $r['description'] ?? '']);
         foreach ($raw['workout_plan'] as $r) cv_legacy_plan($user, $report, $r);
         foreach ($raw['workouts'] as $r) cv_legacy_put($user, $report, 'workouts', $r['id'], 'workout', ($r['name'] ?? '') ?: 'Treino', $r['workout_date'] ?? '', ['activity' => CV_LEGACY_ACTIVITY[$r['type'] ?? 'other'] ?? 'outro', 'notes' => $r['notes'] ?? ''], !empty($r['done']) ? 'done' : 'open');

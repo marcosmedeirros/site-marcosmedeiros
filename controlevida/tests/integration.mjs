@@ -53,9 +53,22 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
     res=await api('archive',{id:task.id,revision:task.revision,archived:true});task=(await res.json()).data;assert.equal(task.status,'archived');
     res=await api('archive',{id:task.id,revision:task.revision,archived:false});task=(await res.json()).data;assert.equal(task.status,'done');
     assert.equal((await api('save',{kind:'transaction',title:'Invalid',day:'2026-10-05',details:{amount_cents:10.5}})).status,400);
-    const habit=(await(await api('save',{kind:'habit',title:'Small step',day:'',details:{recurrence:'weekly',weekdays:[1,3],size:'mini'}})).json()).data;
-    assert.equal(habit.details.size,'mini');
+    const habit=(await(await api('save',{kind:'habit',title:'Small step',day:'',details:{recurrence:'weekly',weekdays:[1,3]}})).json()).data;
+    assert.equal(habit.details.weekdays.join(),'1,3');assert.equal(habit.details.size,undefined,'habits have no size any more');
     res=await api('mark',{id:habit.id,revision:1,day:'2026-10-05',done:true});assert.deepEqual((await res.json()).data.details.completed_dates,['2026-10-05']);
+  });
+  await t.test('money is filed by month and a goal is simply done or not',async()=>{
+    const tx=(await(await api('save',{kind:'transaction',title:'',day:'2026-09-17',details:{direction:'expense',amount_cents:4590,category:'Mercado'}})).json()).data;
+    assert.equal(tx.day,'2026-09-01','the stored day is the first of the month');
+    assert.equal(tx.title,'Mercado','an entry with no description takes its category');
+    const goal=(await(await api('save',{kind:'goal',title:'Correr 5 km',day:'',details:{notes:'passo a passo'}})).json()).data;
+    assert.equal(goal.status,'open');assert.equal(goal.details.progress,undefined,'no percentage is kept');
+    const reached=(await(await api('mark',{id:goal.id,revision:goal.revision,done:true})).json()).data;
+    assert.equal(reached.status,'done');
+    const reopened=(await(await api('mark',{id:reached.id,revision:reached.revision,done:false})).json()).data;
+    assert.equal(reopened.status,'open');
+    // Put the hub back as it was so the later counts stay exact.
+    for(const r of [tx,reopened])assert.ok((await(await api('archive',{id:r.id,revision:r.revision,archived:true})).json()).ok);
   });
   await t.test('finance import is atomic, exact and idempotent',async()=>{
     const snapshot={format:'controlevida-legacy-finance-v1',from:'2026-01-01',to:'2026-12-31',initial_balance_cents:10000,categories:[{name:'Casa'}],transactions:[{id:1,amount:'19.99',type:'expense',description:'House',cat_name:'Casa',transaction_date:'2026-10-05'},{id:2,amount:'50.00',type:'income',description:'Income',cat_name:'Trabalho',transaction_date:'2026-10-05'}]};
@@ -68,8 +81,10 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
   let clientId,access,refreshToken;
   const verifier=randomBytes(32).toString('base64url'),challenge=createHash('sha256').update(verifier).digest('base64url');
   const redirect=origin+'/callback';
-  async function authorize(scope='read write'){
-    const url=new URL(base+'/oauth.php');url.search=new URLSearchParams({route:'authorize',response_type:'code',client_id:clientId,redirect_uri:redirect,code_challenge:challenge,code_challenge_method:'S256',resource:base+'/mcp.php',scope,state:'test-state'});
+  async function authorize(scope='read write',omitResource=false){
+    const params={route:'authorize',response_type:'code',client_id:clientId,redirect_uri:redirect,code_challenge:challenge,code_challenge_method:'S256',scope,state:'test-state'};
+    if(!omitResource)params.resource=base+'/mcp.php';
+    const url=new URL(base+'/oauth.php');url.search=new URLSearchParams(params);
     res=await request(url);assert.equal(res.status,200);const consent=await res.text();assert.match(consent,/Conectar assistente/);
     assert.doesNotMatch(res.headers.get('content-security-policy'),/form-action/,'the consent form must be free to redirect to the assistant callback');const requestId=consent.match(/name="request_id" value="([^"]+)"/)[1];
     res=await request(base+'/oauth.php?route=authorize',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({csrf,request_id:requestId,decision:'allow',...(scope.includes('write')?{write:'1'}:{})})});
@@ -87,6 +102,13 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
     const token=await(await exchange({grant_type:'authorization_code',code,code_verifier:verifier,redirect_uri:redirect})).json();access=token.access_token;refreshToken=token.refresh_token;assert.ok(access);
     assert.equal((await exchange({grant_type:'authorization_code',code,code_verifier:verifier,redirect_uri:redirect})).status,400);
   });
+  await t.test('any assistant origin and protocol revision reaches the hub',async()=>{
+    const call=(headers)=>fetch(base+'/mcp.php',{method:'POST',headers:{Authorization:`Bearer ${access}`,'Content-Type':'application/json',...headers},body:JSON.stringify({jsonrpc:'2.0',id:9,method:'tools/list'})});
+    for(const origin of ['https://claude.ai','https://chatgpt.com'])assert.equal((await call({Origin:origin})).status,200,origin);
+    assert.equal((await call({'MCP-Protocol-Version':'2025-03-26'})).status,200,'a newer protocol revision is accepted');
+    assert.equal((await call({'MCP-Protocol-Version':'whenever'})).status,400,'a malformed revision still fails');
+    assert.equal((await fetch(base+'/mcp.php',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://claude.ai'},body:'{}'})).status,401,'but a token is still required');
+  });
   await t.test('official MCP SDK can initialize, list and update the hub',async()=>{
     const client=new Client({name:'controlevida-test',version:'1.0.0'});
     const transport=new StreamableHTTPClientTransport(new URL(base+'/mcp.php'),{requestInit:{headers:{Authorization:`Bearer ${access}`}}});
@@ -102,8 +124,9 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
     const rotated=await(await exchange({grant_type:'refresh_token',refresh_token:refreshToken})).json();assert.ok(rotated.access_token);
     assert.equal((await exchange({grant_type:'refresh_token',refresh_token:refreshToken})).status,400);
     assert.equal((await fetch(base+'/mcp.php',{headers:{Authorization:`Bearer ${access}`}})).status,401);
-    const code=await authorize('read');
+    const code=await authorize('read',true);
     const ro=await(await exchange({grant_type:'authorization_code',code,code_verifier:verifier,redirect_uri:redirect})).json();
+    assert.ok(ro.access_token,'a client that omits the resource indicator still connects');
     res=await fetch(base+'/mcp.php',{method:'POST',headers:{Authorization:`Bearer ${ro.access_token}`,'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method:'tools/call',params:{name:'salvar_registro',arguments:{kind:'note',title:'Denied',day:'2026-10-05',details:{}}}})});assert.equal(res.status,403);
     const connections=(await(await api('connections')).json()).data;
     for(const c of connections)await api('revoke',{id:c.id});

@@ -138,8 +138,14 @@ function cv_csrf(?string $value = null): void {
     cv_session();
     $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
     $u = parse_url(cv_url());
-    $expected = $u['scheme'] . '://' . $u['host'] . (isset($u['port']) ? ':' . $u['port'] : '');
-    if ($origin !== '' && $origin !== $expected) cv_fail('Origem não autorizada.', 403);
+    $allowed = [$u['scheme'] . '://' . $u['host'] . (isset($u['port']) ? ':' . $u['port'] : '')];
+    // The host the browser actually reached is same-origin by definition; a page on another
+    // site cannot forge it, so this keeps the check while surviving a second domain or alias.
+    if (!empty($_SERVER['HTTP_HOST'])) {
+        $scheme = ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') ?: ((($_SERVER['HTTPS'] ?? 'off') !== 'off') ? 'https' : 'http');
+        $allowed[] = $scheme . '://' . $_SERVER['HTTP_HOST'];
+    }
+    if ($origin !== '' && !in_array($origin, $allowed, true)) cv_fail('Origem não autorizada.', 403);
     if (!hash_equals($_SESSION['csrf'], $value ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''))) cv_fail('Sessão expirada. Atualize a página.', 403);
 }
 

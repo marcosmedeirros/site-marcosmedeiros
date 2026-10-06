@@ -57,7 +57,6 @@ function cv_details(string $kind, array $d, array $old = []): array {
         $out['completed_dates'] = $old['completed_dates'] ?? [];
     }
     if ($kind === 'task') $out += ['area' => cv_enum($d['area'] ?? 'pessoal',['pessoal','casa','trabalho']), 'priority' => cv_enum($d['priority'] ?? 'normal',['baixa','normal','alta'])];
-    if ($kind === 'habit') $out['size'] = cv_enum($d['size'] ?? 'habit',['habit','mini']);
     if (in_array($kind,['event','meal','workout','habit','task'],true)) {
         $time = cv_text($d['time'] ?? '',5);
         if ($time !== '' && !preg_match('/^([01][0-9]|2[0-3]):[0-5][0-9]$/',$time)) cv_fail('Horário inválido.');
@@ -76,7 +75,6 @@ function cv_details(string $kind, array $d, array $old = []): array {
         $out['activity'] = cv_enum($d['activity'] ?? 'caminhada',['caminhada','corrida','forca','futebol','mobilidade','descanso','outro']);
         $out['duration_min'] = cv_int($d['duration_min'] ?? 0,0,1440);
     }
-    if ($kind === 'goal') $out['progress'] = cv_int($d['progress'] ?? 0,0,100);
     return $out;
 }
 
@@ -86,13 +84,16 @@ function cv_save(string $user, array $input, string $source = 'web'): array {
     if ($old && $old['status'] === 'archived') cv_fail('Restaure o registro antes de editar.');
     $kind = cv_enum($input['kind'] ?? '',CV_KINDS);
     if ($old && $old['kind'] !== $kind) cv_fail('O tipo do registro não pode mudar.');
-    $title = cv_text($input['title'] ?? '',200);
-    if ($title === '') cv_fail('Preencha o título.');
     $day = cv_day($input['day'] ?? date('Y-m-d'), in_array($kind,['task','note','goal','habit','workout'],true));
+    // Money is organised by month, so the stored day is always the first of it.
+    if ($kind === 'transaction') $day = substr($day,0,7) . '-01';
     if (!is_array($input['details'] ?? [])) cv_fail('Detalhes inválidos.');
     $details = cv_details($kind,$input['details'] ?? [],$old['details'] ?? []);
+    $title = cv_text($input['title'] ?? '',200);
+    // A transaction with no description is filed under its category.
+    if ($title === '' && $kind === 'transaction') $title = $details['category'];
+    if ($title === '') cv_fail('Preencha o título.');
     $status = $old['status'] ?? 'open';
-    if ($kind === 'goal') $status = $details['progress'] === 100 ? 'done' : 'open';
     $json = json_encode($details, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     $now = cv_now();
     cv_db()->beginTransaction();
@@ -118,7 +119,7 @@ function cv_mark(string $user, array $input, string $source = 'web', bool $archi
         elseif (!$input['archived'] && $status === 'archived') { $status=$details['_status_before_archive'] ?? 'open'; unset($details['_status_before_archive']); }
     }
     else {
-        if (!in_array($old['kind'],['task','habit','workout','event'],true) || $status === 'archived') cv_fail('Este registro não pode ser concluído.');
+        if (!in_array($old['kind'],['task','habit','workout','event','goal'],true) || $status === 'archived') cv_fail('Este registro não pode ser concluído.');
         if (!is_bool($input['done'] ?? null)) cv_fail('Informe done como verdadeiro ou falso.');
         $day = cv_day($input['day'] ?? date('Y-m-d'));
         if (($details['recurrence'] ?? 'once') === 'once') $status = $input['done'] ? 'done' : 'open';
