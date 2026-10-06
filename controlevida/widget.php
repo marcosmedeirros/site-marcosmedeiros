@@ -34,7 +34,8 @@ function cv_widget_script(string $url): string {
     $json = json_encode($url, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     return <<<SCRIPT
 // Controle Vida — widget para o Scriptable.
-// Cole no Scriptable, salve, e adicione o widget na tela de inicio escolhendo este script.
+// Cole no Scriptable, salve, e adicione na tela de inicio escolhendo este script.
+// O mesmo script serve aos tres tamanhos: pequeno, medio e grande.
 // O endereco abaixo e pessoal: vale como senha, nao compartilhe.
 const ENDERECO = $json;
 
@@ -52,49 +53,87 @@ try {
   dados = null;
 }
 
+const familia = config.runsInWidget ? config.widgetFamily : "medium";
+const pequeno = familia === "small";
+const grande = familia === "large" || familia === "extraLarge";
+const pulseira = String(familia).startsWith("accessory");
+
 const w = new ListWidget();
-w.backgroundColor = FUNDO;
-w.setPadding(14, 15, 14, 15);
 w.url = "https://marcosmedeiros.site/controlevida/";
+if (!pulseira) w.backgroundColor = FUNDO;
 
 const texto = (pai, valor, cor, fonte, limite) => {
-  const t = pai.addText(valor);
-  t.textColor = cor;
+  const t = pai.addText(String(valor));
+  if (!pulseira) t.textColor = cor;
   t.font = fonte;
   if (limite) t.lineLimit = limite;
   return t;
 };
 
 if (!dados || !dados.hoje) {
-  texto(w, "Controle Vida", TINTA, Font.semiboldSystemFont(14));
-  w.addSpacer(6);
+  w.setPadding(12, 14, 12, 14);
+  texto(w, "Controle Vida", TINTA, Font.semiboldSystemFont(13));
+  w.addSpacer(4);
   texto(w, "Sem conexao com o site.", FRACO, Font.systemFont(11));
 } else {
-  const topo = w.addStack();
-  texto(topo, dados.titulo.toUpperCase(), FRACO, Font.semiboldSystemFont(9.5));
-  topo.addSpacer();
-  if (dados.proximo) texto(topo, dados.proximo.dias + "d", AZUL, Font.semiboldSystemFont(9.5));
-
-  w.addSpacer(7);
   const faltam = dados.hoje.total - dados.hoje.feitos;
-  texto(w, dados.hoje.feitos + "/" + dados.hoje.total, TINTA, Font.boldSystemFont(32));
-  texto(w, faltam === 0 ? "dia fechado" : faltam + (faltam === 1 ? " pendente" : " pendentes"), FRACO, Font.systemFont(11));
+  const resumo = faltam === 0 ? "dia fechado" : faltam + (faltam === 1 ? " pendente" : " pendentes");
 
-  w.addSpacer(9);
-  for (const item of dados.hoje.itens.slice(0, 4)) {
-    const linha = w.addStack();
-    linha.spacing = 6;
-    linha.centerAlignContent();
-    texto(linha, item.feito ? "●" : "○", item.feito ? AZUL : FRACO, Font.systemFont(9));
-    texto(linha, item.titulo, item.feito ? FRACO : TINTA, Font.systemFont(11.5), 1);
-    w.addSpacer(3);
+  if (pulseira) {
+    // Tela de bloqueio: duas linhas, sem cor propria.
+    texto(w, dados.hoje.feitos + "/" + dados.hoje.total + "  " + resumo, TINTA, Font.semiboldSystemFont(13), 1);
+    const proximo = dados.hoje.itens.find(i => !i.feito);
+    if (proximo) texto(w, proximo.titulo, FRACO, Font.systemFont(12), 1);
+  } else {
+    w.setPadding(11, 14, 11, 14);
+
+    const topo = w.addStack();
+    topo.centerAlignContent();
+    texto(topo, "HOJE", FRACO, Font.semiboldSystemFont(9.5));
+    topo.addSpacer();
+    if (dados.proximo) texto(topo, dados.proximo.dias + "d", AZUL, Font.semiboldSystemFont(9.5));
+
+    w.addSpacer(pequeno ? 5 : 3);
+
+    const numero = w.addStack();
+    numero.bottomAlignContent();
+    texto(numero, dados.hoje.feitos + "/" + dados.hoje.total, TINTA, Font.boldSystemFont(pequeno ? 30 : 26));
+    if (!pequeno) {
+      numero.addSpacer(9);
+      const s = texto(numero, resumo, FRACO, Font.systemFont(11), 1);
+      s.textOpacity = 1;
+    }
+    if (pequeno) texto(w, resumo, FRACO, Font.systemFont(10.5), 1);
+
+    const quantos = pequeno ? 0 : (grande ? 7 : 3);
+    if (quantos > 0) {
+      w.addSpacer(8);
+      for (const item of dados.hoje.itens.slice(0, quantos)) {
+        const linha = w.addStack();
+        linha.centerAlignContent();
+        texto(linha, item.feito ? "●" : "○", item.feito ? AZUL : FRACO, Font.systemFont(8.5));
+        linha.addSpacer(6);
+        texto(linha, item.titulo, item.feito ? FRACO : TINTA, Font.systemFont(11), 1);
+        w.addSpacer(grande ? 5 : 3);
+      }
+      const sobra = dados.hoje.total - quantos;
+      if (sobra > 0) texto(w, "+" + sobra, FRACO, Font.systemFont(9.5));
+    }
+
+    w.addSpacer();
+    const rodape = w.addStack();
+    rodape.centerAlignContent();
+    texto(rodape, "Treinos da semana " + dados.semana.feitos + "/" + dados.semana.total, FRACO, Font.systemFont(9.5), 1);
+    if (grande && dados.proximo) {
+      rodape.addSpacer();
+      texto(rodape, dados.proximo.titulo, FRACO, Font.systemFont(9.5), 1);
+    }
   }
-
-  w.addSpacer();
-  texto(w, "Treinos da semana " + dados.semana.feitos + "/" + dados.semana.total, FRACO, Font.systemFont(9.5));
 }
 
 if (config.runsInWidget) Script.setWidget(w);
+else if (pequeno) w.presentSmall();
+else if (grande) w.presentLarge();
 else w.presentMedium();
 Script.complete();
 SCRIPT;
