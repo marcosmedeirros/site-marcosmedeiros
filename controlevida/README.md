@@ -14,13 +14,14 @@ Aplicação PHP + PDO (MySQL em produção, SQLite nos testes e na prévia local
 - Widget na tela de início do celular pelo app Scriptable: `widget.php` devolve o dia e a sequência da semana em JSON, e serve o próprio script já com o endereço pessoal dentro. Notificações push não existem e não são apresentadas como conectadas.
 - Login por sessão com senha em hash, opção "manter conectado" (60 dias), CSRF, limite de tentativas, validação no servidor, revisões contra sobrescrita concorrente e auditoria.
 - MCP HTTP com OAuth, PKCE S256, consentimento, permissões de leitura/escrita, tokens curtos, rotação e revogação.
+- Evolução: uma foto por semana, com a primeira e a última lado a lado. As imagens ficam fora do `public_html`, são servidas só para a sessão do dono e não vivem na tabela de registros — por isso nenhum feed, widget ou ferramenta do assistente alcança elas.
 - Visual editorial: fundo preto, títulos em serifada, azul nos detalhes, divisões por fios no lugar de caixas, e atalhos na barra inferior no celular.
 
 ## Estrutura
 
 | Caminho | Conteúdo |
 | --- | --- |
-| `index.php`, `api.php`, `mcp.php`, `oauth.php`, `metadata.php`, `calendar.php`, `widget.php` | Páginas e endpoints públicos |
+| `index.php`, `api.php`, `mcp.php`, `oauth.php`, `metadata.php`, `calendar.php`, `widget.php`, `photos.php` | Páginas e endpoints públicos |
 | `install.php` | Instalador web de uso único (some depois de configurado) |
 | `assets/` | Interface (CSS, JS, ícones Lucide) |
 | `server/` | Código do servidor; nunca servido |

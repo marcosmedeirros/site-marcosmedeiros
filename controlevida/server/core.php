@@ -53,6 +53,7 @@ function cv_schema(): void {
         'settings' => 'user_id VARCHAR(40) PRIMARY KEY, data ' . $long . ' NOT NULL',
         'audit' => 'id VARCHAR(40) PRIMARY KEY, user_id VARCHAR(40) NOT NULL, action VARCHAR(50) NOT NULL, record_id VARCHAR(40) NOT NULL, source VARCHAR(20) NOT NULL, happened_at VARCHAR(30) NOT NULL',
         'limits' => 'id VARCHAR(40) PRIMARY KEY, bucket VARCHAR(64) NOT NULL, expires_at BIGINT NOT NULL',
+        'photos' => 'id VARCHAR(40) PRIMARY KEY, user_id VARCHAR(40) NOT NULL, day VARCHAR(10) NOT NULL, mime VARCHAR(40) NOT NULL, created_at VARCHAR(30) NOT NULL',
         'clients' => 'id VARCHAR(80) PRIMARY KEY, name VARCHAR(100) NOT NULL, redirects TEXT NOT NULL, created_at BIGINT NOT NULL',
         'codes' => 'hash VARCHAR(64) PRIMARY KEY, user_id VARCHAR(40) NOT NULL, client_id VARCHAR(80) NOT NULL, redirect_uri TEXT NOT NULL, challenge VARCHAR(128) NOT NULL, scope VARCHAR(100) NOT NULL, resource TEXT NOT NULL, expires_at BIGINT NOT NULL',
         'tokens' => 'id VARCHAR(40) PRIMARY KEY, user_id VARCHAR(40) NOT NULL, client_id VARCHAR(80) NOT NULL, name VARCHAR(100) NOT NULL, access_hash VARCHAR(64) UNIQUE NOT NULL, refresh_hash VARCHAR(64) UNIQUE NOT NULL, scope VARCHAR(100) NOT NULL, resource TEXT NOT NULL, expires_at BIGINT NOT NULL, refresh_expires_at BIGINT NOT NULL, created_at BIGINT NOT NULL'

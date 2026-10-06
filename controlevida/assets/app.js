@@ -13,7 +13,7 @@ const shift = (day,n) => { const d = new Date(`${day}T12:00:00Z`); d.setUTCDate(
 const weekday = day => dateObject(day).getDay() || 7;
 const weekStart = day => shift(day,-(weekday(day)-1));
 const shiftMonth = (month,n) => { const d=new Date(`${month}-01T12:00:00Z`); d.setUTCMonth(d.getUTCMonth()+n); return d.toISOString().slice(0,7); };
-const views = {today:['Hoje','layout-dashboard'],tasks:['Tarefas','list-checks'],calendar:['Agenda','calendar-days'],habits:['Hábitos','circle-check'],finance:['Finanças','wallet'],workouts:['Treinos','activity'],meals:['Alimentação','utensils'],notes:['Notas e metas','notebook-pen'],history:['Histórico','history'],settings:['Ajustes e conexões','settings-2']};
+const views = {today:['Hoje','layout-dashboard'],tasks:['Tarefas','list-checks'],calendar:['Agenda','calendar-days'],habits:['Hábitos','circle-check'],finance:['Finanças','wallet'],workouts:['Treinos','activity'],meals:['Alimentação','utensils'],notes:['Notas e metas','notebook-pen'],progress:['Evolução','camera'],history:['Histórico','history'],settings:['Ajustes e conexões','settings-2']};
 const kinds = {task:['Tarefa','list-checks'],event:['Evento','calendar-days'],habit:['Hábito','circle-check'],transaction:['Lançamento','wallet'],workout:['Treino','activity'],meal:['Refeição','utensils'],note:['Nota','notebook-pen'],goal:['Meta','flag']};
 const mealNames = {cafe:'Café da manhã',almoco:'Almoço',lanche:'Lanche',jantar:'Jantar',outro:'Outra refeição'};
 const activities = {caminhada:'Caminhada',corrida:'Corrida',forca:'Força',futebol:'Futebol',mobilidade:'Mobilidade',descanso:'Descanso',outro:'Outra atividade'};
@@ -145,6 +145,13 @@ function notesView() {
   const notes=records('note').filter(match),goals=records('goal').filter(match);
   return `${header('Notas e metas','O QUE VOCÊ QUER LEMBRAR E CONSTRUIR','note')}${toolbar([['all','Tudo'],['notes','Notas'],['goals','Metas']])}${S.filter!=='notes'?section('Metas',`<div class="goal-grid">${goals.map(r=>{const ok=done(r,r.day||S.today);return `<article class="goal-item ${ok?'is-done':''}"><div class="goal-head"><button class="check ${ok?'checked':''}" aria-label="${ok?'Reabrir':'Concluir'} ${esc(r.title)}" aria-pressed="${ok}" data-check="${r.id}" data-day="${r.day||S.today}">${ok?icon('check'):''}</button><button class="record-title" data-edit="${r.id}">${esc(r.title)}</button></div>${r.details.notes?`<p>${esc(r.details.notes)}</p>`:''}<p class="record-meta">${r.day?`Até ${dayLabel(r.day)}`:'Sem prazo'}${ok?' · Concluída':''}</p></article>`}).join('')||empty('Uma meta por vez.','goal')}</div>`,null,'goal'):''}${S.filter!=='goals'?section('Notas',notes.map(r=>`<article class="note-item"><div><button class="record-title" data-edit="${r.id}">${esc(r.title)}</button><span class="record-meta">${dayLabel(r.day)}</span></div><p class="preserve">${esc(r.details.notes)}</p></article>`).join('')||empty('Nenhuma nota registrada.','note')):''}`;
 }
+function progressView() {
+  const fotos=S.photos||[];
+  const comparar=fotos.length>1?[fotos[0],fotos[fotos.length-1]]:[];
+  const semana=r=>new Intl.DateTimeFormat('pt-BR',{day:'2-digit',month:'short'}).format(dateObject(r.day));
+  const foto=(r,legenda)=>`<figure class="photo"><img src="photos.php?action=file&id=${r.id}" alt="Foto de ${semana(r)}" loading="lazy"><figcaption>${esc(legenda||semana(r))}</figcaption></figure>`;
+  return `${header('Evolução','UMA FOTO POR SEMANA, TODA SEXTA')}<p class="muted">Mesmo ângulo, mesma luz, de preferência pela manhã. É o que mede o shape melhor que a balança.</p><div class="settings-actions"><label class="primary file-label">${icon('camera')}Adicionar foto da semana<input type="file" id="photo-file" accept="image/jpeg,image/png,image/webp"></label></div>${comparar.length?`<section class="section"><div class="section-heading"><h2>Antes e agora</h2><span class="muted">${Math.round((dateObject(comparar[1].day)-dateObject(comparar[0].day))/86400000)} dias</span></div><div class="photo-compare">${foto(comparar[0],'Primeira · '+semana(comparar[0]))}${foto(comparar[1],'Última · '+semana(comparar[1]))}</div></section>`:''}<section class="section"><div class="section-heading"><h2>Todas</h2><span class="muted">${fotos.length} ${fotos.length===1?'foto':'fotos'}</span></div>${fotos.length?`<div class="photo-grid">${fotos.map(r=>`<div class="photo-item">${foto(r)}<button class="icon-button" data-photo-delete="${r.id}" title="Apagar foto" aria-label="Apagar foto de ${semana(r)}">${icon('trash-2')}</button></div>`).join('')}</div>`:empty('Nenhuma foto ainda. A primeira é a mais importante.')}</section>`;
+}
 function historyView() {
   const items=S.records.filter(r=>r.day===S.day || (r.details.completed_dates||[]).includes(S.day)).filter(match);
   return `${header('Seu histórico','O QUE FICOU REGISTRADO')}${dayPicker()}${toolbar([])}<div class="record-list">${items.length?items.map(r=>row(r,{notes:true})).join(''):empty('Nenhum registro para este dia.')}</div>`;
@@ -153,7 +160,7 @@ function settingsView() {
   const m=S.settings.migration;
   return `${header('Ajustes e conexões','SEU ESPAÇO, DO SEU JEITO')}<div class="settings-layout"><section class="section"><h2>Conta</h2><dl class="settings-dl"><div><dt>Nome</dt><dd>${esc(S.user.name)}</dd></div><div><dt>E-mail</dt><dd>${esc(S.user.email)}</dd></div><div><dt>Fuso horário</dt><dd>America/Sao_Paulo</dd></div></dl><h2>Finanças</h2><form id="settings-form"><label>Saldo inicial (R$)<input name="balance" inputmode="decimal" value="${((S.settings.initial_balance_cents||0)/100).toFixed(2).replace('.',',')}" required></label><label>Categorias, uma por linha<textarea name="categories" rows="6" required>${esc(S.settings.categories.join('\n'))}</textarea></label><button class="primary" type="submit">${icon('check')}Salvar ajustes</button></form></section><section class="section"><h2>Conexão com o assistente</h2><label>Endereço MCP<input readonly value="${esc(S.mcpUrl)}" aria-label="Endereço MCP"></label><button class="text-button" data-copy-mcp>${icon('copy')}Copiar endereço</button><div id="connections"><p class="muted">Carregando conexões...</p></div><h2 class="spaced">Seus dados</h2>${m?`<p class="migration-status">${icon('check-circle-2')}Importação registrada em ${dayLabel(m.imported_at.slice(0,10))}</p><p class="muted">Período: ${dayLabel(m.from)} a ${dayLabel(m.to)} · ${m.new_records} novos lançamentos na última importação.</p>`:'<p class="muted">Nenhuma importação do app anterior registrada.</p>'}<div class="settings-actions"><button class="secondary" data-backup>${icon('download')}Exportar meus dados</button><button class="secondary" data-migrate>${icon('database')}Importar do app anterior</button><label class="secondary file-label">${icon('upload')}Importar arquivo<input type="file" id="import-file" accept="application/json,.json"></label><button class="text-button" data-archives>${icon('archive')}Registros arquivados</button></div><div id="archives"></div><h2 class="spaced">Integrações</h2><div class="integration-row">${icon('calendar-days')}<span>Calendário do celular e Google Agenda<small>${S.settings.calendar_token?'Assinatura ativa — trate o endereço como senha':'Gere um endereço para assinar sua agenda no iPhone ou no Google'}</small></span><button class="text-button ${S.settings.calendar_token?'danger':''}" data-link="calendar" data-enable="${S.settings.calendar_token?'off':'on'}">${S.settings.calendar_token?'Desligar':'Ativar'}</button></div>${S.settings.calendar_token?`<label>Endereço da assinatura<input readonly value="${esc(linkUrl('calendar'))}" aria-label="Endereço da assinatura"></label><button class="text-button" data-copy-link="calendar">${icon('copy')}Copiar endereço</button>`:''}<div class="integration-row">${icon('smartphone')}<span>Widget na tela de início<small>${S.settings.widget_token?'Ativo — cole o script no app Scriptable':'Mostra o dia e a sequência da semana, pelo app Scriptable'}</small></span><button class="text-button ${S.settings.widget_token?'danger':''}" data-link="widget" data-enable="${S.settings.widget_token?'off':'on'}">${S.settings.widget_token?'Desligar':'Ativar'}</button></div>${S.settings.widget_token?`<p class="muted">Instale o Scriptable, toque em + para criar um script, cole o conteúdo e salve. Depois segure a tela de início, adicione o widget do Scriptable e escolha esse script.</p><div class="settings-actions"><button class="secondary" data-copy-script>${icon('copy')}Copiar script do widget</button></div>`:''}<div class="integration-row">${icon('smartphone')}<span>App no celular</span><span class="tag">PWA</span></div></section></div>`;
 }
-const renderers={today:dashboard,tasks:tasksView,calendar:calendarView,habits:habitsView,finance:financeView,workouts:workoutsView,meals:mealsView,notes:notesView,history:historyView,settings:settingsView};
+const renderers={today:dashboard,tasks:tasksView,calendar:calendarView,habits:habitsView,finance:financeView,workouts:workoutsView,meals:mealsView,notes:notesView,progress:progressView,history:historyView,settings:settingsView};
 function render() {
   if(!S.user)return;
   document.title=`${views[S.view][0]} · Controle Vida`;
@@ -164,6 +171,7 @@ function render() {
   icons();
   if(S.scrollBoard)showToday();
   if(S.view==='settings')loadConnections();
+  if(S.view==='progress'&&!S.photos)loadPhotos();
 }
 function navigate(view) { if(!views[view])view='today'; S.view=view; S.search='';S.filter=view==='workouts'?'today':'all';if(view!=='calendar')S.day=S.today; if(!['finance','calendar'].includes(view))S.month=S.today.slice(0,7); S.week=weekStart(S.today); S.scrollBoard=true; location.hash=view; setMenu(false);render(); }
 const input = (name,label,type,value='',extra='') => `<label>${label}<input name="${name}" type="${type}" value="${esc(value)}" ${extra}></label>`;
@@ -287,6 +295,13 @@ document.addEventListener('pointermove',dragMove);
 document.addEventListener('pointerup',()=>dragEnd(false));
 document.addEventListener('pointercancel',()=>dragEnd(true));
 function download(content,name,type) { const url=URL.createObjectURL(new Blob([content],{type}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000); }
+async function loadPhotos() {
+  try { const res=await fetch('photos.php?action=list',{credentials:'same-origin',cache:'no-store'});
+    const data=await res.json();
+    if(!data.ok)throw new Error(data.error);
+    S.photos=data.data; if(S.view==='progress')render(); }
+  catch(e){ S.photos=[]; toast(e.message||'Não foi possível carregar as fotos.'); }
+}
 async function loadConnections() {
   try { const conns=await api('connections');if(!$('#connections'))return;$('#connections').innerHTML=conns.length?conns.map(c=>`<div class="integration-row">${icon('plug')}<span>${esc(c.name)}<small>${c.scope.includes('write')?'Leitura e escrita':'Somente leitura'}</small></span><button class="text-button danger" data-revoke="${c.id}">Revogar</button></div>`).join(''):'<p class="muted">Nenhum assistente conectado.</p>';icons(); } catch(e){if($('#connections'))$('#connections').textContent=e.message;}
 }
@@ -315,6 +330,11 @@ document.addEventListener('click',async event=>{
   if(b.dataset.link){const ligar=b.dataset.enable==='on';await api('link',{name:b.dataset.link,enable:ligar});await refresh();toast(ligar?'Endereço criado.':'Endereço desligado.');}
   if(b.hasAttribute('data-backup')){download(JSON.stringify(await api('export'),null,2),`controlevida-${S.today}.json`,'application/json');}
   if(b.hasAttribute('data-migrate')){b.disabled=true;try{const r=await api('migrate',{});await refresh();toast(importSummary(r.finance.new_records,r));}finally{b.disabled=false;}}
+  if(b.dataset.photoDelete){
+    const res=await fetch('photos.php?action=delete',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json','X-CSRF-Token':S.csrf},body:JSON.stringify({id:b.dataset.photoDelete})});
+    const data=await res.json(); if(!data.ok)throw new Error(data.error);
+    S.photos=data.data; render(); toast('Foto apagada.');
+  }
   if(b.dataset.revoke){await api('revoke',{id:b.dataset.revoke});await loadConnections();toast('Conexão revogada.');}
   if(b.hasAttribute('data-archives')){S.archived=(await api('list',undefined,{archived:1})).filter(r=>r.status==='archived');$('#archives').innerHTML=S.archived.length?S.archived.map(r=>`<div class="integration-row"><span>${esc(r.title)}</span><button class="text-button" data-restore="${r.id}">Restaurar</button></div>`).join(''):'<p class="muted">Nenhum registro arquivado.</p>';}
   if(b.dataset.restore){const r=S.archived.find(r=>r.id===b.dataset.restore);await api('archive',{id:r.id,revision:r.revision,archived:false});await refresh();toast('Registro restaurado.');}
@@ -331,6 +351,17 @@ document.addEventListener('change',async event=>{
  if(el.id==='day-select'){S.day=el.value||S.today;render();}
  if(el.id==='month-select'){S.month=el.value||S.today.slice(0,7);render();}
  if(el.name==='recurrence'){$('.weekday-options').hidden=el.value!=='weekly';$('#monthly-option').hidden=el.value!=='monthly';}
+ if(el.id==='photo-file' && el.files[0]){
+   const arquivo=el.files[0]; el.value='';
+   try{
+     if(arquivo.size>12582912)throw new Error('Imagem muito grande. O limite é 12 MB.');
+     status('saving');
+     const corpo=new FormData(); corpo.append('foto',arquivo); corpo.append('day',S.today);
+     const res=await fetch('photos.php?action=upload',{method:'POST',credentials:'same-origin',headers:{'X-CSRF-Token':S.csrf},body:corpo});
+     const data=await res.json(); if(!data.ok)throw new Error(data.error);
+     S.photos=data.data; status(''); render(); toast('Foto guardada.');
+   }catch(e){ status('error'); toast(e.message); }
+ }
  if(el.id==='import-file' && el.files[0]){
    try{if(el.files[0].size>5000000)throw new Error('Arquivo muito grande.');const data=JSON.parse(await el.files[0].text());const r=await api('import',data);await refresh();toast(importSummary(r.new_records,r.state));}catch(e){toast(e.message);}
  }

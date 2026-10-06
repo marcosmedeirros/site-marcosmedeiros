@@ -404,3 +404,14 @@ dialog::backdrop{background:#000c}
   .transactions td:nth-child(4){grid-area:edit;align-self:center}
 }
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+
+/* Evolução: fotos da semana, só para quem está logado. */
+.photo{margin:0;display:flex;flex-direction:column;gap:8px}
+.photo img{width:100%;height:auto;border-radius:4px;display:block;background:#0a0a0a}
+.photo figcaption{font-size:11px;color:var(--faint)}
+.photo-compare{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:10px}
+.photo-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:20px;margin-top:10px}
+.photo-item{position:relative}
+.photo-item>.icon-button{position:absolute;top:6px;right:6px;background:#000a;border-radius:4px}
+.photo-item>.icon-button:hover{color:var(--red)}
+@media(max-width:680px){.photo-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}.photo-compare{gap:12px}}

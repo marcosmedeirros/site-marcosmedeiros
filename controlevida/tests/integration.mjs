@@ -120,6 +120,33 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
     assert.equal((await fetch(`${base}/widget.php?t=${token}`)).status,404,'revoking kills the link');
     for(const r of [chore,marcado,money])assert.ok((await(await api('archive',{id:r.id,revision:r.revision,archived:true})).json()).ok);
   });
+  await t.test('progress photos stay behind the session and out of every link',async()=>{
+    const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==','base64');
+    const envia=(bytes,nome,tipo,token=csrf)=>{
+      const form=new FormData();
+      form.append('foto',new Blob([bytes],{type:tipo}),nome);
+      form.append('day','2026-10-09');
+      return request(`${base}/photos.php?action=upload`,{method:'POST',headers:{'X-CSRF-Token':token},body:form});
+    };
+    assert.equal((await fetch(`${base}/photos.php?action=list`)).status,401,'no session, no list');
+    assert.equal((await envia(png,'f.png','image/png','errado')).status,403,'the upload needs the form token');
+    assert.equal((await envia(Buffer.from('nao sou uma imagem'),'f.txt','text/plain')).status,400,'only real images');
+    let res=await envia(png,'foto.png','image/png');
+    assert.equal(res.status,200);
+    const fotos=(await res.json()).data;
+    assert.equal(fotos.length,1);assert.equal(fotos[0].day,'2026-10-09');
+    res=await request(`${base}/photos.php?action=file&id=${fotos[0].id}`);
+    assert.equal(res.status,200);
+    assert.ok(res.headers.get('content-type').startsWith('image/'));
+    assert.ok((await res.arrayBuffer()).byteLength>0,'the bytes come back');
+    assert.equal((await fetch(`${base}/photos.php?action=file&id=${fotos[0].id}`)).status,401,'and only to whoever is signed in');
+    assert.equal((await request(`${base}/photos.php?action=file&id=naoexiste`)).status,404);
+    const guardados=(await(await api('bootstrap')).json()).data.records;
+    assert.ok(!guardados.some(r=>r.id===fotos[0].id),'a photo is not a record, so no feed or tool can reach it');
+    res=await request(`${base}/photos.php?action=delete`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({id:fotos[0].id})});
+    assert.equal((await res.json()).data.length,0);
+    assert.equal((await request(`${base}/photos.php?action=file&id=${fotos[0].id}`)).status,404,'and the file goes with it');
+  });
   await t.test('finance import is atomic, exact and idempotent',async()=>{
     const snapshot={format:'controlevida-legacy-finance-v1',from:'2026-01-01',to:'2026-12-31',initial_balance_cents:10000,categories:[{name:'Casa'}],transactions:[{id:1,amount:'19.99',type:'expense',description:'House',cat_name:'Casa',transaction_date:'2026-10-05'},{id:2,amount:'50.00',type:'income',description:'Income',cat_name:'Trabalho',transaction_date:'2026-10-05'}]};
     let data=(await(await api('import',snapshot)).json()).data;assert.equal(data.new_records,2);
