@@ -165,7 +165,7 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
     const destino=new URL((await res.json()).data.url);
     assert.equal(destino.searchParams.get('client_id'),'12345');
     assert.equal(destino.searchParams.get('scope'),'activity:read_all','reading past activities needs this scope');
-    assert.equal(destino.searchParams.get('redirect_uri'),`${base}/strava.php?route=callback`);
+    assert.equal(destino.searchParams.get('redirect_uri'),`${base}/strava.php`,'Strava refuses a redirect_uri with a query string');
     assert.ok(destino.searchParams.get('state').length>20,'and carries a state against forged callbacks');
     assert.equal((await request(`${base}/strava.php?route=connect`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':'errado'},body:'{}'})).status,403);
 

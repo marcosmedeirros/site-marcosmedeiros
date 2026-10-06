@@ -16,7 +16,8 @@ const CV_STRAVA_SPORTS = [
 
 function cv_strava_api(): string { return rtrim(getenv('CV_STRAVA_API') ?: 'https://www.strava.com/api/v3', '/'); }
 function cv_strava_oauth(): string { return rtrim(getenv('CV_STRAVA_OAUTH') ?: 'https://www.strava.com/oauth', '/'); }
-function cv_strava_redirect(): string { return cv_url() . '/strava.php?route=callback'; }
+// Strava refuses a redirect_uri that carries a query string, so the callback is the bare file.
+function cv_strava_redirect(): string { return cv_url() . '/strava.php'; }
 
 function cv_http(string $url, ?array $form = null, array $headers = []): array {
     if (function_exists('curl_init')) {

@@ -15,7 +15,8 @@ try {
     $route = $_GET['route'] ?? '';
     $post = $_SERVER['REQUEST_METHOD'] === 'POST';
 
-    if ($route === 'callback') {
+    // Strava appends code, scope and state to the bare file, so that is how the callback announces itself.
+    if (!$post && ($route === 'callback' || isset($_GET['code']) || isset($_GET['error']))) {
         $state = $_GET['state'] ?? '';
         if (empty($_SESSION['strava_state']) || !hash_equals($_SESSION['strava_state'], (string)$state)) cv_fail('Esta autorização mudou. Tente conectar de novo.', 403);
         unset($_SESSION['strava_state']);
