@@ -30,6 +30,7 @@ try {
         $strava['access_token'] = $data['access_token'] ?? '';
         $strava['expires_at'] = (int)($data['expires_at'] ?? 0);
         $strava['atleta'] = trim(($data['athlete']['firstname'] ?? '') . ' ' . ($data['athlete']['lastname'] ?? '')) ?: 'conectado';
+        $strava['escopo'] = (string)($_GET['scope'] ?? '');
         cv_strava_store($uid, $strava);
         cv_audit($uid, 'strava.connect', '', 'web');
         header('Location: /controlevida/#settings');

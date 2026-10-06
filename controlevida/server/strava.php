@@ -39,6 +39,17 @@ function cv_http(string $url, ?array $form = null, array $headers = []): array {
     return [$status, json_decode((string)$body, true)];
 }
 
+// Strava explains itself in the body; hiding that behind a generic message costs a round trip.
+function cv_strava_detail($body): string {
+    if (!is_array($body)) return '';
+    $parts = [];
+    if (!empty($body['message'])) $parts[] = (string)$body['message'];
+    foreach ($body['errors'] ?? [] as $error) {
+        if (is_array($error)) $parts[] = trim(($error['resource'] ?? '') . ' ' . ($error['field'] ?? '') . ' ' . ($error['code'] ?? ''));
+    }
+    return mb_substr(implode(' · ', array_filter($parts)), 0, 200);
+}
+
 function cv_strava_settings(string $user): array {
     $data = cv_settings($user);
     return is_array($data['strava'] ?? null) ? $data['strava'] : [];
@@ -56,7 +67,10 @@ function cv_strava_access(string $user, array &$strava): string {
     [$status, $data] = cv_http(cv_strava_oauth() . '/token', [
         'client_id' => $strava['client_id'] ?? '', 'client_secret' => $strava['client_secret'] ?? '',
         'grant_type' => 'refresh_token', 'refresh_token' => $strava['refresh_token']]);
-    if ($status !== 200 || empty($data['access_token'])) cv_fail('A conexão com o Strava expirou. Conecte de novo.', 401);
+    if ($status !== 200 || empty($data['access_token'])) {
+        $detail = cv_strava_detail($data);
+        cv_fail('Não consegui renovar o acesso ao Strava (' . $status . ($detail !== '' ? ' · ' . $detail : '') . '). Conecte de novo.', 401);
+    }
     $strava['access_token'] = $data['access_token'];
     $strava['refresh_token'] = $data['refresh_token'] ?? $strava['refresh_token'];
     $strava['expires_at'] = (int)($data['expires_at'] ?? time() + 3600);
@@ -129,8 +143,11 @@ function cv_strava_sync(string $user): array {
     $after = (int)($strava['last_sync'] ?? strtotime('-45 days'));
     [$status, $activities] = cv_http(cv_strava_api() . '/athlete/activities?' . http_build_query(['after' => $after - 3600, 'per_page' => 100]),
         null, ['Authorization: Bearer ' . $token]);
-    if ($status === 401) cv_fail('A conexão com o Strava expirou. Conecte de novo.', 401);
-    if ($status !== 200 || !is_array($activities)) cv_fail('O Strava não respondeu como esperado.', 503);
+    $detail = cv_strava_detail($activities);
+    if ($status === 401) cv_fail('O Strava recusou o acesso (401' . ($detail ? ' · ' . $detail : '') . '). Se a autorização não incluiu as atividades privadas, conecte de novo marcando essa opção.', 401);
+    if ($status === 403) cv_fail('O Strava bloqueou o acesso à API (403' . ($detail ? ' · ' . $detail : '') . '). É o limite para contas gratuitas.', 403);
+    if ($status !== 200 || !is_array($activities)) cv_fail('O Strava respondeu ' . $status . ($detail ? ': ' . $detail : '') . '.', 503);
+    if (!array_is_list($activities)) cv_fail('O Strava respondeu algo inesperado' . ($detail ? ': ' . $detail : '') . '.', 503);
     $report = cv_strava_import($user, $activities);
     $strava = cv_strava_settings($user);
     $strava['last_sync'] = time();
