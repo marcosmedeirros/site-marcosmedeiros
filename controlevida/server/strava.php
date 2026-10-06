@@ -78,7 +78,7 @@ function cv_strava_access(string $user, array &$strava): string {
     return $strava['access_token'];
 }
 
-function cv_strava_note(array $activity, float $km, int $minutes): string {
+function cv_strava_note(array $activity, float $km, int $minutes, string $source = 'strava'): string {
     $parts = [];
     if ($km > 0) $parts[] = number_format($km, 2, ',', '.') . ' km';
     if ($minutes > 0) $parts[] = $minutes . ' min';
@@ -89,11 +89,13 @@ function cv_strava_note(array $activity, float $km, int $minutes): string {
     }
     if (!empty($activity['average_heartrate'])) $parts[] = round((float)$activity['average_heartrate']) . ' bpm em média';
     if (!empty($activity['total_elevation_gain'])) $parts[] = round((float)$activity['total_elevation_gain']) . ' m de subida';
-    return 'Importado do Strava' . ($parts ? ': ' . implode(' · ', $parts) : '') . '.';
+    $origem = $source === 'strava' ? 'Importado do Strava' : 'Registrado pelo iPhone';
+    return $origem . ($parts ? ': ' . implode(' · ', $parts) : '') . '.';
 }
 
-// Each activity becomes a record of what happened; the matching planned session is ticked off.
-function cv_strava_import(string $user, array $activities): array {
+// A finished session becomes a record of what happened, and the planned session of that day is
+// ticked off. The fields follow the Strava activity shape because that is where they came from first.
+function cv_import_sessions(string $user, array $activities, string $source = 'strava'): array {
     $report = ['novos' => 0, 'repetidos' => 0, 'marcados' => 0, 'ignorados' => 0];
     $planned = array_values(array_filter(cv_list($user),
         fn($r) => $r['kind'] === 'workout' && ($r['details']['recurrence'] ?? 'once') !== 'once'));
@@ -104,13 +106,13 @@ function cv_strava_import(string $user, array $activities): array {
             $stravaId = (string)($activity['id'] ?? '');
             $day = substr((string)($activity['start_date_local'] ?? ''), 0, 10);
             if ($stravaId === '' || $day === '' || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $day)) { $report['ignorados']++; continue; }
-            $sport = CV_STRAVA_SPORTS[$activity['sport_type'] ?? $activity['type'] ?? ''] ?? 'outro';
-            $id = md5('strava:' . $stravaId);
+            $sport = $activity['cv_activity'] ?? CV_STRAVA_SPORTS[$activity['sport_type'] ?? $activity['type'] ?? ''] ?? 'outro';
+            $id = md5($source . ':' . $stravaId);
             if (cv_query('SELECT id FROM cv_records WHERE id=?', [$id])->fetchColumn()) { $report['repetidos']++; continue; }
 
             $km = round(((float)($activity['distance'] ?? 0)) / 1000, 2);
             $minutes = min(1440, (int)round(((int)($activity['moving_time'] ?? 0)) / 60));
-            $details = cv_details('workout', ['activity' => $sport, 'duration_min' => $minutes, 'notes' => cv_strava_note($activity, $km, $minutes)], []);
+            $details = cv_details('workout', ['activity' => $sport, 'duration_min' => $minutes, 'notes' => cv_strava_note($activity, $km, $minutes, $source)], []);
             $title = mb_substr(trim((string)($activity['name'] ?? '')) ?: 'Atividade', 0, 200);
             cv_query('INSERT INTO cv_records (id,user_id,kind,title,day,status,details,revision,created_at,updated_at) VALUES (?,?,?,?,?,?,?,1,?,?)',
                 [$id, $user, 'workout', $title, $day, 'done', json_encode($details, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR), cv_now(), cv_now()]);
@@ -122,17 +124,21 @@ function cv_strava_import(string $user, array $activities): array {
                 break;
             }
         }
-        cv_audit($user, 'strava.sync', '', 'strava');
+        cv_audit($user, $source . '.sync', '', $source);
         cv_db()->commit();
     } catch (Throwable $e) { cv_db()->rollBack(); throw $e; }
     // cv_mark opens a transaction of its own, so the planned sessions are ticked after the import commits.
     foreach ($tick as [$id, $day]) {
         $plan = cv_get($user, $id);
         if (cv_done($plan, $day)) continue;
-        cv_mark($user, ['id' => $plan['id'], 'revision' => $plan['revision'], 'done' => true, 'day' => $day], 'strava');
+        cv_mark($user, ['id' => $plan['id'], 'revision' => $plan['revision'], 'done' => true, 'day' => $day], $source);
         $report['marcados']++;
     }
     return $report;
+}
+
+function cv_strava_import(string $user, array $activities): array {
+    return cv_import_sessions($user, $activities, 'strava');
 }
 
 function cv_strava_sync(string $user): array {

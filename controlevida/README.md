@@ -15,6 +15,7 @@ Aplicação PHP + PDO (MySQL em produção, SQLite nos testes e na prévia local
 - Login por sessão com senha em hash, opção "manter conectado" (60 dias), CSRF, limite de tentativas, validação no servidor, revisões contra sobrescrita concorrente e auditoria.
 - MCP HTTP com OAuth, PKCE S256, consentimento, permissões de leitura/escrita, tokens curtos, rotação e revogação.
 - Evolução: uma foto por semana, com a primeira e a última lado a lado. As imagens ficam fora do `public_html`, são servidas só para a sessão do dono e não vivem na tabela de registros — por isso nenhum feed, widget ou ferramenta do assistente alcança elas.
+- Atalhos e Siri no iPhone: `atalhos.php` aceita marcar um registro pelo nome falado, registrar o treino que a Apple Saúde gravou e anexar uma linha à nota do dia. A chave vai no corpo da requisição, não na URL, para não sobrar em log nem em histórico.
 - Strava: as credenciais são digitadas no site e ficam no banco, a autorização acontece no navegador dele e a sincronia traz as atividades do relógio (via FitBeing) como treinos concluídos, marcando a sessão planejada do dia. Reimportar não duplica: o id da atividade gera sempre o mesmo registro.
 - Visual editorial: fundo preto, títulos em serifada, azul nos detalhes, divisões por fios no lugar de caixas, e atalhos na barra inferior no celular.
 
@@ -22,7 +23,7 @@ Aplicação PHP + PDO (MySQL em produção, SQLite nos testes e na prévia local
 
 | Caminho | Conteúdo |
 | --- | --- |
-| `index.php`, `api.php`, `mcp.php`, `oauth.php`, `metadata.php`, `calendar.php`, `widget.php`, `photos.php`, `strava.php` | Páginas e endpoints públicos |
+| `index.php`, `api.php`, `mcp.php`, `oauth.php`, `metadata.php`, `calendar.php`, `widget.php`, `photos.php`, `strava.php`, `atalhos.php` | Páginas e endpoints públicos |
 | `install.php` | Instalador web de uso único (some depois de configurado) |
 | `assets/` | Interface (CSS, JS, ícones Lucide) |
 | `server/` | Código do servidor; nunca servido |
@@ -56,11 +57,22 @@ Em Ajustes → Integrações, cada botão gera um endereço próprio: `calendar.
 
 O feed de calendário traz eventos, tarefas e treinos não arquivados — repetições viram `RRULE`, horários saem em UTC e registros avulsos com mais de 30 dias ficam de fora. Lançamentos, refeições, notas e hábitos não entram.
 
+## Atalhos do iPhone
+
+Ativado em Ajustes → Integrações. O atalho faz POST em `atalhos.php` com JSON contendo `t` (a chave) e `acao`:
+
+- `marcar` — `titulo` e, se quiser, `feito: false` e `dia`. O nome é comparado sem acento e sem caixa, com um único resultado parcial bastando; empate resolve pelo que vence hoje.
+- `treino` — `tipo`, `minutos`, `km`, `bpm`, `nome`. Vira sessão concluída e marca o treino planejado do dia. Repetir no mesmo dia e tipo não duplica.
+- `nota` — `texto`, anexado à nota do dia.
+- `hoje` — devolve o que falta, para a Siri responder.
+
+A chave trafega no corpo justamente para não cair em log de servidor nem no histórico do navegador, ao contrário das do calendário e do widget, que o formato de assinatura obriga a pôr na URL.
+
 ## Strava
 
 Em Ajustes → Integrações, ele cola o Client ID e o Client Secret de `strava.com/settings/api` (com `marcosmedeiros.site` em *Authorization Callback Domain*) e toca em Conectar. O secret é gravado no banco e nunca volta ao navegador: `cv_settings_safe()` filtra o que a API devolve. A autorização pede escopo `activity:read_all` e guarda só o refresh token, que renova o acesso sozinho.
 
-Cada atividade vira um treino concluído com id derivado do id do Strava, então sincronizar de novo não duplica, e a sessão planejada daquele dia é marcada como feita. A adesão da semana conta apenas os treinos que se repetem — atividade importada é histórico, não meta.
+`cv_import_sessions()` é o caminho único para registrar uma sessão concluída, venha ela do Strava ou dos Atalhos. Cada atividade vira um treino concluído com id derivado da origem e do id de lá, então sincronizar de novo não duplica, e a sessão planejada daquele dia é marcada como feita. A adesão da semana conta apenas os treinos que se repetem — atividade importada é histórico, não meta.
 
 `scripts/strava-import.php` roda o mesmo mapeamento a partir de um arquivo JSON; é por ele que o teste cobre a importação sem falar com o Strava.
 

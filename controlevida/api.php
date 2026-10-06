@@ -34,7 +34,7 @@ try {
         cv_save_settings($uid,$data);
     }
     elseif ($action === 'link' && $post) {
-        $name = cv_enum($input['name'] ?? '',['calendar','widget']);
+        $name = cv_enum($input['name'] ?? '',['calendar','widget','atalhos']);
         if (!is_bool($input['enable'] ?? null)) cv_fail('Informe enable como verdadeiro ou falso.');
         $data = cv_settings($uid); $key = $name . '_token';
         if ($input['enable']) { if (empty($data[$key])) $data[$key] = cv_secret(); }

@@ -197,6 +197,51 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
     assert.equal((await(await api('bootstrap')).json()).data.settings.strava,undefined,'disconnecting wipes it');
     for(const r of [marcado,corrida,guardados.find(x=>x.title==='Pedal leve')])await api('archive',{id:r.id,revision:r.revision,archived:true});
   });
+  await t.test('Shortcuts endpoint marks by voice, logs a session and jots a note',async()=>{
+    const token=(await(await api('link',{name:'atalhos',enable:true})).json()).data.atalhos_token;
+    const chama=(corpo)=>fetch(`${base}/atalhos.php`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(corpo)});
+    assert.equal((await chama({acao:'hoje'})).status,401,'without the key, nothing');
+    assert.equal((await chama({t:'x'.repeat(43),acao:'hoje'})).status,401,'a wrong key looks the same');
+    assert.equal((await fetch(`${base}/atalhos.php?t=${token}`)).status,405,'and the key never travels in the URL');
+
+    const habito=(await(await api('save',{kind:'habit',title:'Tomar 2L Água',day:'',details:{recurrence:'daily'}})).json()).data;
+    const plano=(await(await api('save',{kind:'workout',title:'Corrida do plano',day:'',details:{activity:'corrida',recurrence:'daily',duration_min:20}})).json()).data;
+
+    // Siri hears the name without accents and with the wrong case.
+    let r=await(await chama({t:token,acao:'marcar',titulo:'tomar 2l agua'})).json();
+    assert.equal(r.ok,true);assert.match(r.mensagem,/marcado/);
+    let estado=(await(await api('bootstrap')).json()).data.records.find(x=>x.id===habito.id);
+    assert.equal(estado.details.completed_dates.length,1);
+    r=await(await chama({t:token,acao:'marcar',titulo:'Tomar 2L Água'})).json();
+    assert.match(r.mensagem,/já estava marcado/,'asking twice is not an error');
+    r=await(await chama({t:token,acao:'marcar',titulo:'Tomar 2L Água',feito:false})).json();
+    assert.match(r.mensagem,/desmarcado/);
+    assert.equal((await chama({t:token,acao:'marcar',titulo:'isso não existe'})).status,404);
+
+    // The workout Apple Health wrote, handed over by the shortcut.
+    const hoje=(await(await api('bootstrap')).json()).data.today;
+    r=await(await chama({t:token,acao:'treino',tipo:'Corrida',minutos:16,km:3.2,bpm:158,nome:'Corrida da Saúde'})).json();
+    assert.equal(r.novos,1);assert.equal(r.marcados,1,'and the planned session of the day is ticked');
+    assert.match(r.mensagem,/registrado e treino do dia marcado/);
+    const registros=(await(await api('bootstrap')).json()).data.records;
+    const sessao=registros.find(x=>x.title==='Corrida da Saúde');
+    assert.equal(sessao.day,hoje);assert.equal(sessao.status,'done');assert.equal(sessao.details.activity,'corrida');
+    assert.match(sessao.details.notes,/Registrado pelo iPhone/);assert.match(sessao.details.notes,/3,20 km/);
+    r=await(await chama({t:token,acao:'treino',tipo:'Corrida',minutos:16,km:3.2})).json();
+    assert.equal(r.novos,0,'a shortcut that runs twice does not log it twice');
+
+    r=await(await chama({t:token,acao:'nota',texto:'Primeira linha'})).json();
+    assert.equal(r.ok,true);
+    await chama({t:token,acao:'nota',texto:'Segunda linha'});
+    const nota=(await(await api('bootstrap')).json()).data.records.find(x=>x.kind==='note'&&x.day===hoje);
+    assert.match(nota.details.notes,/Primeira linha/);assert.match(nota.details.notes,/Segunda linha/,'the second line is appended, not replacing');
+
+    r=await(await chama({t:token,acao:'hoje'})).json();
+    assert.match(r.mensagem,/pendentes|Dia fechado/);
+    await api('link',{name:'atalhos',enable:false});
+    assert.equal((await chama({t:token,acao:'hoje'})).status,401,'revoking kills the key');
+    for(const x of [habito,plano,sessao,nota])await api('archive',{id:x.id,revision:(await(await api('bootstrap')).json()).data.records.find(y=>y.id===x.id)?.revision??x.revision,archived:true});
+  });
   await t.test('finance import is atomic, exact and idempotent',async()=>{
     const snapshot={format:'controlevida-legacy-finance-v1',from:'2026-01-01',to:'2026-12-31',initial_balance_cents:10000,categories:[{name:'Casa'}],transactions:[{id:1,amount:'19.99',type:'expense',description:'House',cat_name:'Casa',transaction_date:'2026-10-05'},{id:2,amount:'50.00',type:'income',description:'Income',cat_name:'Trabalho',transaction_date:'2026-10-05'}]};
     let data=(await(await api('import',snapshot)).json()).data;assert.equal(data.new_records,2);
