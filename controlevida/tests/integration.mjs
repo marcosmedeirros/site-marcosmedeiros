@@ -1,7 +1,7 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {spawn,spawnSync} from 'node:child_process';
-import {mkdtemp,rm,readFile} from 'node:fs/promises';
+import {mkdtemp,rm,readFile,writeFile} from 'node:fs/promises';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {createServer} from 'node:net';
@@ -77,7 +77,7 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
     const evt=(await(await api('save',{kind:'event',title:'Reunião PNIP',day:'2026-10-07',details:{time:'09:00',end_time:'10:00',location:'Online'}})).json()).data;
     const chore=(await(await api('save',{kind:'task',title:'Varrer, passar & limpar',day:'',details:{recurrence:'weekly',weekdays:[1,3],area:'casa'}})).json()).data;
     const secret=(await(await api('save',{kind:'transaction',title:'Salário',day:'2026-10-01',details:{direction:'income',amount_cents:500000,category:'Trabalho'}})).json()).data;
-    const token=(await(await api('calendar',{enable:true})).json()).data.calendar_token;
+    const token=(await(await api('link',{name:'calendar',enable:true})).json()).data.calendar_token;
     assert.match(token,/^[A-Za-z0-9_-]{30,}$/);
     const res=await fetch(`${base}/calendar.php?t=${token}`);
     assert.equal(res.status,200);assert.match(res.headers.get('content-type'),/text\/calendar/);assert.match(res.headers.get('cache-control'),/no-store/);
@@ -88,9 +88,37 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
     assert.match(ics,/RRULE:FREQ=WEEKLY;BYDAY=MO,WE/);
     assert.doesNotMatch(ics,/Salário|500000/,'money never reaches a feed that lives in a URL');
     assert.equal(ics.split('\r\n').every(l=>Buffer.byteLength(l)<=75),true,'every line is folded to 75 octets');
-    await api('calendar',{enable:false});
+    await api('link',{name:'calendar',enable:false});
     assert.equal((await fetch(`${base}/calendar.php?t=${token}`)).status,404,'revoking kills the link');
     for(const r of [evt,chore,secret])await api('archive',{id:r.id,revision:r.revision,archived:true});
+  });
+  await t.test('widget feed serves the day and carries its own Scriptable script',async()=>{
+    assert.equal((await fetch(`${base}/widget.php`)).status,404,'no payload without a token');
+    const chore=(await(await api('save',{kind:'task',title:'Limpar cozinha',day:'',details:{recurrence:'daily',area:'casa'}})).json()).data;
+    const run=(await(await api('save',{kind:'workout',title:'Corrida do widget',day:'',details:{activity:'corrida',recurrence:'daily',duration_min:20}})).json()).data;
+    const money=(await(await api('save',{kind:'transaction',title:'Aluguel',day:'2026-10-01',details:{direction:'expense',amount_cents:120000,category:'Casa'}})).json()).data;
+    const token=(await(await api('link',{name:'widget',enable:true})).json()).data.widget_token;
+    let res=await fetch(`${base}/widget.php?t=${token}`);
+    assert.equal(res.status,200);assert.ok(res.headers.get('cache-control').includes('no-store'));
+    const body=await res.text();
+    assert.doesNotMatch(body,/Aluguel|120000/,'money stays out of a link that lives in a URL');
+    const data=JSON.parse(body);
+    assert.equal(data.hoje.total,data.hoje.itens.length);
+    for(const titulo of ['Corrida do widget','Limpar cozinha'])assert.ok(data.hoje.itens.some(i=>i.titulo===titulo),titulo);
+    assert.ok(data.semana.total>=7,'a daily workout is due every day of the week');
+    const marcado=(await(await api('mark',{id:run.id,revision:run.revision,done:true})).json()).data;
+    const depois=await(await fetch(`${base}/widget.php?t=${token}`)).json();
+    assert.equal(depois.hoje.feitos,data.hoje.feitos+1);
+    assert.equal(depois.hoje.itens[0].feito,false,'what is still missing comes first');
+    res=await fetch(`${base}/widget.php?t=${token}&script=1`);
+    assert.ok(res.headers.get('content-type').includes('text/plain'));
+    const script=await res.text();
+    assert.ok(script.includes(token),'the script carries its own address');
+    const file=path.join(temp,'widget.mjs');await writeFile(file,script);
+    assert.equal(spawnSync(process.execPath,['--check',file],{encoding:'utf8'}).status,0,'the generated script parses');
+    await api('link',{name:'widget',enable:false});
+    assert.equal((await fetch(`${base}/widget.php?t=${token}`)).status,404,'revoking kills the link');
+    for(const r of [chore,marcado,money])assert.ok((await(await api('archive',{id:r.id,revision:r.revision,archived:true})).json()).ok);
   });
   await t.test('finance import is atomic, exact and idempotent',async()=>{
     const snapshot={format:'controlevida-legacy-finance-v1',from:'2026-01-01',to:'2026-12-31',initial_balance_cents:10000,categories:[{name:'Casa'}],transactions:[{id:1,amount:'19.99',type:'expense',description:'House',cat_name:'Casa',transaction_date:'2026-10-05'},{id:2,amount:'50.00',type:'income',description:'Income',cat_name:'Trabalho',transaction_date:'2026-10-05'}]};
