@@ -19,7 +19,7 @@ try {
         setcookie(session_name(),'',cv_cookie(1));
         cv_json(['ok'=>true]);
     }
-    if ($action === 'bootstrap') cv_json(['ok'=>true,'data'=>['user'=>$user,'today'=>date('Y-m-d'),'records'=>cv_list($uid),'settings'=>cv_settings($uid),'csrf'=>$_SESSION['csrf'],'mcp_url'=>cv_resource()]]);
+    if ($action === 'bootstrap') cv_json(['ok'=>true,'data'=>['user'=>$user,'today'=>date('Y-m-d'),'records'=>cv_list($uid),'settings'=>cv_settings_safe(cv_settings($uid)),'csrf'=>$_SESSION['csrf'],'mcp_url'=>cv_resource()]]);
     if ($action === 'list') cv_json(['ok'=>true,'data'=>cv_list($uid,$input)]);
     if ($action === 'save' && $post) $data = cv_save($uid,$input);
     elseif ($action === 'mark' && $post) $data = cv_mark($uid,$input);
@@ -47,6 +47,6 @@ try {
     elseif ($action === 'audit') $data = cv_query('SELECT action,source,happened_at FROM cv_audit WHERE user_id=? ORDER BY happened_at DESC LIMIT 50',[$uid])->fetchAll();
     elseif ($action === 'export') $data = ['format'=>'controlevida-backup-v1','exported_at'=>cv_now(),'records'=>cv_list($uid,['archived'=>true]),'settings'=>cv_settings($uid)];
     else cv_fail('Ação não encontrada.',404);
-    cv_json(['ok'=>true,'data'=>$data]);
+    cv_json(['ok'=>true,'data'=>is_array($data) && isset($data['categories']) ? cv_settings_safe($data) : $data]);
 } catch (DomainException $e) { cv_json(['ok'=>false,'error'=>$e->getMessage()],$e->getCode() ?: 400); }
 catch (Throwable $e) { error_log('ControleVida API: ' . get_class($e)); cv_json(['ok'=>false,'error'=>'Não foi possível concluir. Tente novamente.'],503); }

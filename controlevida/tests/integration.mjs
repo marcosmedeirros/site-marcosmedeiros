@@ -147,6 +147,47 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
     assert.equal((await res.json()).data.length,0);
     assert.equal((await request(`${base}/photos.php?action=file&id=${fotos[0].id}`)).status,404,'and the file goes with it');
   });
+  await t.test('Strava import ticks the plan, keeps the secret and never repeats itself',async()=>{
+    // The credentials go in through the site, so the browser must never get the secret back.
+    let res=await request(`${base}/strava.php?route=credentials`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({client_id:'  12345 ',client_secret:'s'.repeat(40)})});
+    assert.equal(res.status,200);
+    const settings=(await(await api('bootstrap')).json()).data.settings;
+    assert.equal(settings.strava.client_id,'12345');
+    assert.equal(settings.strava.configurado,true);
+    assert.equal(settings.strava.conectado,false);
+    assert.equal(settings.strava.client_secret,undefined,'the secret stays on the server');
+    assert.doesNotMatch(JSON.stringify(settings),/ssssss/,'and does not leak anywhere else in the payload');
+    assert.equal((await request(`${base}/strava.php?route=credentials`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({client_id:'12345',client_secret:'curto'})})).status,400);
+    assert.equal((await request(`${base}/strava.php?route=sync`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:'{}'})).status,400,'syncing before connecting is refused');
+
+    // A planned Monday run, and the activity the watch pushed for that same Monday.
+    const plano=(await(await api('save',{kind:'workout',title:'Corrida planejada',day:'',details:{activity:'corrida',recurrence:'weekly',weekdays:[1],duration_min:20}})).json()).data;
+    const atividades=[
+      {id:9001,name:'Corrida da manhã',sport_type:'Run',start_date_local:'2026-10-05T07:10:00Z',distance:3200,moving_time:965,average_heartrate:158.4},
+      {id:9002,name:'Pedal leve',sport_type:'Ride',start_date_local:'2026-10-07T18:00:00Z',distance:12000,moving_time:1800},
+      {id:9003,name:'Sem data',sport_type:'Run',start_date_local:'',distance:1000,moving_time:300},
+    ];
+    const arquivo=path.join(temp,'strava.json');
+    await writeFile(arquivo,JSON.stringify(atividades));
+    const roda=()=>{const r=spawnSync(php,['scripts/strava-import.php',arquivo],{env,encoding:'utf8'});assert.equal(r.status,0,r.stderr||r.stdout);return JSON.parse(r.stdout);};
+    const primeira=roda();
+    assert.deepEqual(primeira,{novos:2,repetidos:0,marcados:1,ignorados:1},'two imported, one ticked off, one without a date');
+    const segunda=roda();
+    assert.deepEqual(segunda,{novos:0,repetidos:2,marcados:0,ignorados:1},'a second run changes nothing');
+
+    const guardados=(await(await api('bootstrap')).json()).data.records;
+    const corrida=guardados.find(r=>r.title==='Corrida da manhã');
+    assert.equal(corrida.day,'2026-10-05');assert.equal(corrida.status,'done');
+    assert.equal(corrida.details.activity,'corrida');assert.equal(corrida.details.duration_min,16);
+    assert.match(corrida.details.notes,/3,20 km/);assert.match(corrida.details.notes,/5:02\/km/);assert.match(corrida.details.notes,/158 bpm/);
+    assert.equal(guardados.find(r=>r.title==='Pedal leve').details.activity,'outro');
+    const marcado=guardados.find(r=>r.id===plano.id);
+    assert.deepEqual(marcado.details.completed_dates,['2026-10-05'],'the planned session is the one that counts as done');
+
+    await request(`${base}/strava.php?route=disconnect`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:'{}'});
+    assert.equal((await(await api('bootstrap')).json()).data.settings.strava,undefined,'disconnecting wipes it');
+    for(const r of [marcado,corrida,guardados.find(x=>x.title==='Pedal leve')])await api('archive',{id:r.id,revision:r.revision,archived:true});
+  });
   await t.test('finance import is atomic, exact and idempotent',async()=>{
     const snapshot={format:'controlevida-legacy-finance-v1',from:'2026-01-01',to:'2026-12-31',initial_balance_cents:10000,categories:[{name:'Casa'}],transactions:[{id:1,amount:'19.99',type:'expense',description:'House',cat_name:'Casa',transaction_date:'2026-10-05'},{id:2,amount:'50.00',type:'income',description:'Income',cat_name:'Trabalho',transaction_date:'2026-10-05'}]};
     let data=(await(await api('import',snapshot)).json()).data;assert.equal(data.new_records,2);

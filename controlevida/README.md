@@ -15,13 +15,14 @@ Aplicação PHP + PDO (MySQL em produção, SQLite nos testes e na prévia local
 - Login por sessão com senha em hash, opção "manter conectado" (60 dias), CSRF, limite de tentativas, validação no servidor, revisões contra sobrescrita concorrente e auditoria.
 - MCP HTTP com OAuth, PKCE S256, consentimento, permissões de leitura/escrita, tokens curtos, rotação e revogação.
 - Evolução: uma foto por semana, com a primeira e a última lado a lado. As imagens ficam fora do `public_html`, são servidas só para a sessão do dono e não vivem na tabela de registros — por isso nenhum feed, widget ou ferramenta do assistente alcança elas.
+- Strava: as credenciais são digitadas no site e ficam no banco, a autorização acontece no navegador dele e a sincronia traz as atividades do relógio (via FitBeing) como treinos concluídos, marcando a sessão planejada do dia. Reimportar não duplica: o id da atividade gera sempre o mesmo registro.
 - Visual editorial: fundo preto, títulos em serifada, azul nos detalhes, divisões por fios no lugar de caixas, e atalhos na barra inferior no celular.
 
 ## Estrutura
 
 | Caminho | Conteúdo |
 | --- | --- |
-| `index.php`, `api.php`, `mcp.php`, `oauth.php`, `metadata.php`, `calendar.php`, `widget.php`, `photos.php` | Páginas e endpoints públicos |
+| `index.php`, `api.php`, `mcp.php`, `oauth.php`, `metadata.php`, `calendar.php`, `widget.php`, `photos.php`, `strava.php` | Páginas e endpoints públicos |
 | `install.php` | Instalador web de uso único (some depois de configurado) |
 | `assets/` | Interface (CSS, JS, ícones Lucide) |
 | `server/` | Código do servidor; nunca servido |
@@ -54,6 +55,14 @@ Em Ajustes → Integrações, cada botão gera um endereço próprio: `calendar.
 `widget.php` devolve JSON com os registros de hoje, quantos treinos da semana foram cumpridos e o próximo evento; com `&script=1` devolve o script do Scriptable já apontando para o endereço pessoal. As regras de repetição desse arquivo espelham as de `assets/app.js` — mexer em uma pede conferir a outra. Clientes de calendário não têm onde fazer login, então esse token na URL é a credencial inteira: ele é aleatório, longo, nunca indexado e revogável no mesmo lugar. Quem tiver o endereço vê a agenda, por isso ele deve ser tratado como senha.
 
 O feed de calendário traz eventos, tarefas e treinos não arquivados — repetições viram `RRULE`, horários saem em UTC e registros avulsos com mais de 30 dias ficam de fora. Lançamentos, refeições, notas e hábitos não entram.
+
+## Strava
+
+Em Ajustes → Integrações, ele cola o Client ID e o Client Secret de `strava.com/settings/api` (com `marcosmedeiros.site` em *Authorization Callback Domain*) e toca em Conectar. O secret é gravado no banco e nunca volta ao navegador: `cv_settings_safe()` filtra o que a API devolve. A autorização pede escopo `activity:read_all` e guarda só o refresh token, que renova o acesso sozinho.
+
+Cada atividade vira um treino concluído com id derivado do id do Strava, então sincronizar de novo não duplica, e a sessão planejada daquele dia é marcada como feita. A adesão da semana conta apenas os treinos que se repetem — atividade importada é histórico, não meta.
+
+`scripts/strava-import.php` roda o mesmo mapeamento a partir de um arquivo JSON; é por ele que o teste cobre a importação sem falar com o Strava.
 
 ## MCP
 

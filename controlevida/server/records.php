@@ -78,6 +78,25 @@ function cv_details(string $kind, array $d, array $old = []): array {
     return $out;
 }
 
+// Mirrors the rules the interface uses in assets/app.js; keep both in step.
+function cv_done(array $r, string $day): bool {
+    $recurrence = $r['details']['recurrence'] ?? 'once';
+    return $recurrence !== 'once'
+        ? in_array($day, $r['details']['completed_dates'] ?? [], true)
+        : $r['status'] === 'done';
+}
+function cv_due(array $r, string $day): bool {
+    $d = $r['details'];
+    if ($r['day'] !== '' && $r['day'] > $day) return false;
+    return match ($d['recurrence'] ?? 'once') {
+        'daily' => true,
+        'weekly' => in_array((int)date('N', strtotime($day)), $d['weekdays'] ?? [], true),
+        'monthly' => (int)substr($day, 8, 2) === (int)($d['month_day'] ?? 1),
+        default => $r['day'] === '' || $r['day'] === $day
+            || ($r['kind'] === 'task' && $r['day'] < $day && !cv_done($r, $day)),
+    };
+}
+
 function cv_save(string $user, array $input, string $source = 'web'): array {
     $id = isset($input['id']) ? cv_text($input['id'],40) : cv_id();
     $old = isset($input['id']) ? cv_get($user,$id) : null;

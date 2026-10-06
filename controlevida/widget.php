@@ -11,25 +11,6 @@ header('X-Content-Type-Options: nosniff');
 header('Referrer-Policy: no-referrer');
 header('Cache-Control: no-store, private');
 
-// Mirrors the rules the interface uses in assets/app.js; keep both in step.
-function cv_w_done(array $r, string $day): bool {
-    $recurrence = $r['details']['recurrence'] ?? 'once';
-    return $recurrence !== 'once'
-        ? in_array($day, $r['details']['completed_dates'] ?? [], true)
-        : $r['status'] === 'done';
-}
-function cv_w_due(array $r, string $day): bool {
-    $d = $r['details'];
-    if ($r['day'] !== '' && $r['day'] > $day) return false;
-    return match ($d['recurrence'] ?? 'once') {
-        'daily' => true,
-        'weekly' => in_array((int)date('N', strtotime($day)), $d['weekdays'] ?? [], true),
-        'monthly' => (int)substr($day, 8, 2) === (int)($d['month_day'] ?? 1),
-        default => $r['day'] === '' || $r['day'] === $day
-            || ($r['kind'] === 'task' && $r['day'] < $day && !cv_w_done($r, $day)),
-    };
-}
-
 function cv_widget_script(string $url): string {
     $json = json_encode($url, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     return <<<SCRIPT
@@ -161,8 +142,8 @@ try {
     $records = cv_list($user);
     $itens = []; $feitos = 0;
     foreach ($records as $r) {
-        if (!in_array($r['kind'], ['task', 'habit', 'workout'], true) || !cv_w_due($r, $today)) continue;
-        $done = cv_w_done($r, $today);
+        if (!in_array($r['kind'], ['task', 'habit', 'workout'], true) || !cv_due($r, $today)) continue;
+        $done = cv_done($r, $today);
         $feitos += $done ? 1 : 0;
         // Unfinished first, so a glance at the widget shows what is still missing.
         $itens[] = ['titulo' => $r['title'], 'feito' => $done, 'tipo' => $r['kind'], 'ordem' => ($done ? 1 : 0)];
@@ -175,9 +156,9 @@ try {
     for ($i = 0; $i < 7; $i++) {
         $day = date('Y-m-d', strtotime("$monday +$i day"));
         foreach ($records as $r) {
-            if ($r['kind'] !== 'workout' || !cv_w_due($r, $day)) continue;
+            if ($r['kind'] !== 'workout' || ($r['details']['recurrence'] ?? 'once') === 'once' || !cv_due($r, $day)) continue;
             $semana['total']++;
-            if (cv_w_done($r, $day)) $semana['feitos']++;
+            if (cv_done($r, $day)) $semana['feitos']++;
         }
     }
 

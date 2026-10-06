@@ -198,6 +198,16 @@ function cv_settings(string $user): array {
     return $raw ? json_decode($raw, true, 64, JSON_THROW_ON_ERROR) : ['initial_balance_cents' => 0, 'categories' => ['Alimentação','Moradia','Transporte','Saúde','Lazer','Trabalho','Outros']];
 }
 
+// What the browser may see: the phone tokens build URLs there, but the Strava secret never leaves.
+function cv_settings_safe(array $data): array {
+    if (isset($data['strava'])) {
+        $s = $data['strava'];
+        $data['strava'] = ['client_id' => $s['client_id'] ?? '', 'configurado' => !empty($s['client_secret']),
+            'conectado' => !empty($s['refresh_token']), 'atleta' => $s['atleta'] ?? '', 'last_sync' => $s['last_sync'] ?? 0];
+    }
+    return $data;
+}
+
 function cv_save_settings(string $user, array $data): void {
     $json = json_encode($data, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     if (cv_query('SELECT user_id FROM cv_settings WHERE user_id=?', [$user])->fetchColumn()) cv_query('UPDATE cv_settings SET data=? WHERE user_id=?', [$json, $user]);
