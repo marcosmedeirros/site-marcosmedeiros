@@ -159,6 +159,15 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
     assert.doesNotMatch(JSON.stringify(settings),/ssssss/,'and does not leak anywhere else in the payload');
     assert.equal((await request(`${base}/strava.php?route=credentials`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:JSON.stringify({client_id:'12345',client_secret:'curto'})})).status,400);
     assert.equal((await request(`${base}/strava.php?route=sync`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:'{}'})).status,400,'syncing before connecting is refused');
+    // Connecting is asked for by fetch and answers with the address, because a form POST reports
+    // an origin the server does not recognise and was refused.
+    res=await request(`${base}/strava.php?route=connect`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':csrf},body:'{}'});
+    const destino=new URL((await res.json()).data.url);
+    assert.equal(destino.searchParams.get('client_id'),'12345');
+    assert.equal(destino.searchParams.get('scope'),'activity:read_all','reading past activities needs this scope');
+    assert.equal(destino.searchParams.get('redirect_uri'),`${base}/strava.php?route=callback`);
+    assert.ok(destino.searchParams.get('state').length>20,'and carries a state against forged callbacks');
+    assert.equal((await request(`${base}/strava.php?route=connect`,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-Token':'errado'},body:'{}'})).status,403);
 
     // A planned Monday run, and the activity the watch pushed for that same Monday.
     const plano=(await(await api('save',{kind:'workout',title:'Corrida planejada',day:'',details:{activity:'corrida',recurrence:'weekly',weekdays:[1],duration_min:20}})).json()).data;

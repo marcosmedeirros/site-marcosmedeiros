@@ -15,24 +15,6 @@ try {
     $route = $_GET['route'] ?? '';
     $post = $_SERVER['REQUEST_METHOD'] === 'POST';
 
-    if ($route === 'connect') {
-        cv_csrf($_POST['csrf'] ?? '');
-        $strava = cv_strava_settings($uid);
-        if (empty($strava['client_id']) || empty($strava['client_secret'])) cv_fail('Informe o Client ID e o Client Secret antes de conectar.');
-        $_SESSION['strava_state'] = cv_secret();
-        $query = http_build_query([
-            'client_id' => $strava['client_id'],
-            'redirect_uri' => cv_strava_redirect(),
-            'response_type' => 'code',
-            'approval_prompt' => 'auto',
-            // Reading past activities is the whole point of the connection.
-            'scope' => 'activity:read_all',
-            'state' => $_SESSION['strava_state'],
-        ]);
-        header('Location: ' . (getenv('CV_STRAVA_AUTHORIZE') ?: 'https://www.strava.com/oauth/authorize') . '?' . $query);
-        exit;
-    }
-
     if ($route === 'callback') {
         $state = $_GET['state'] ?? '';
         if (empty($_SESSION['strava_state']) || !hash_equals($_SESSION['strava_state'], (string)$state)) cv_fail('Esta autorização mudou. Tente conectar de novo.', 403);
@@ -56,14 +38,29 @@ try {
     if (!$post) cv_fail('Método não permitido.', 405);
     cv_csrf();
 
-    if ($route === 'credentials') {
+    if ($route === 'connect') {
+        // Asked for by fetch, like every other route here, so the browser reports the same origin
+        // it does everywhere else: a plain form POST does not, and was refused.
+        $strava = cv_strava_settings($uid);
+        if (empty($strava['client_id']) || empty($strava['client_secret'])) cv_fail('Informe o Client ID e o Client Secret antes de conectar.');
+        $_SESSION['strava_state'] = cv_secret();
+        $report = ['url' => (getenv('CV_STRAVA_AUTHORIZE') ?: 'https://www.strava.com/oauth/authorize') . '?' . http_build_query([
+            'client_id' => $strava['client_id'],
+            'redirect_uri' => cv_strava_redirect(),
+            'response_type' => 'code',
+            'approval_prompt' => 'auto',
+            // Reading past activities is the whole point of the connection.
+            'scope' => 'activity:read_all',
+            'state' => $_SESSION['strava_state'],
+        ])];
+    } elseif ($route === 'credentials') {
         $in = cv_input();
         $strava = cv_strava_settings($uid);
         $id = preg_replace('/\D/', '', (string)($in['client_id'] ?? ''));
         $secret = trim((string)($in['client_secret'] ?? ''));
         if ($id === '' || !preg_match('/^[A-Za-z0-9]{20,80}$/', $secret)) cv_fail('Confira o Client ID e o Client Secret copiados do Strava.');
         // New credentials invalidate any previous authorisation.
-        cv_strava_store($uid, ['client_id' => $id, 'client_secret' => $secret] + ($strava['client_id'] === $id ? $strava : []));
+        cv_strava_store($uid, ['client_id' => $id, 'client_secret' => $secret] + (($strava['client_id'] ?? '') === $id ? $strava : []));
     } elseif ($route === 'sync') {
         $report = cv_strava_sync($uid);
     } elseif ($route === 'disconnect') {

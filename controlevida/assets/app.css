@@ -415,6 +415,5 @@ dialog::backdrop{background:#000c}
 .photo-item>.icon-button{position:absolute;top:6px;right:6px;background:#000a;border-radius:4px}
 .photo-item>.icon-button:hover{color:var(--red)}
 @media(max-width:680px){.photo-grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}.photo-compare{gap:12px}}
-.inline-form{display:inline}
 #strava-form{margin-top:18px}
 #strava-form .text-button{margin-top:16px}
