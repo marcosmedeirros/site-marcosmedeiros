@@ -69,7 +69,9 @@ try {
         header('Location: /controlevida/'); exit;
     }
     if ($_SERVER['REQUEST_METHOD']==='POST') {
-        cv_csrf($_POST['csrf'] ?? '');
+        // The consent form is guarded by the session token below plus the one-shot request id;
+        // both are unreadable from another site, so the browser's origin is not required to match.
+        cv_csrf($_POST['csrf'] ?? '', false);
         if (!hash_equals($_SESSION['oauth_request'] ?? '',$_POST['request_id'] ?? '') || empty($_SESSION['oauth_request'])) cv_fail('Esta solicitação mudou. Reabra a conexão para autorizar.');
         $args=['state'=>$in['state'] ?? ''];
         if (($_POST['decision'] ?? '')!=='allow') $args['error']='access_denied';

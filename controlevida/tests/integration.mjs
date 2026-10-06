@@ -43,7 +43,7 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
   let task;
   await t.test('validated records, CSRF, ownership and concurrent edits',async()=>{
     const payload={kind:'task',title:'Task <script>unsafe</script>',day:'2026-10-05',details:{area:'casa',priority:'alta'}};
-    assert.equal((await api('save',payload,{Origin:'https://untrusted.example'})).status,403);
+    assert.equal((await api('save',payload,{Origin:'https://untrusted.example'})).status,403,'the app API stays strict about origins');
     assert.equal((await api('save',{...payload,day:'2026-02-30'})).status,400);
     task=(await(await api('save',payload)).json()).data;assert.equal(task.revision,1);
     res=await api('save',{...payload,id:task.id,revision:task.revision,title:'Updated'});task=(await res.json()).data;assert.equal(task.revision,2);
@@ -87,7 +87,9 @@ test('Private hub: sessions, money, migration, ownership, OAuth and MCP',async t
     const url=new URL(base+'/oauth.php');url.search=new URLSearchParams(params);
     res=await request(url);assert.equal(res.status,200);const consent=await res.text();assert.match(consent,/Conectar assistente/);
     assert.doesNotMatch(res.headers.get('content-security-policy'),/form-action/,'the consent form must be free to redirect to the assistant callback');const requestId=consent.match(/name="request_id" value="([^"]+)"/)[1];
-    res=await request(base+'/oauth.php?route=authorize',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({csrf,request_id:requestId,decision:'allow',...(scope.includes('write')?{write:'1'}:{})})});
+    assert.equal((await request(base+'/oauth.php?route=authorize',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded',Origin:'https://claude.ai'},body:new URLSearchParams({csrf:'wrong',request_id:requestId,decision:'allow'})})).status,403,'the consent form still needs its own token');
+    // The assistant's browser may report any origin on this form; the token and request id are the guard.
+    res=await request(base+'/oauth.php?route=authorize',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded',Origin:'https://claude.ai'},body:new URLSearchParams({csrf,request_id:requestId,decision:'allow',...(scope.includes('write')?{write:'1'}:{})})});
     assert.equal(res.status,302);return new URL(res.headers.get('location')).searchParams.get('code');
   }
   async function exchange(args){return request(base+'/oauth.php?route=token',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({client_id:clientId,resource:base+'/mcp.php',...args})});}

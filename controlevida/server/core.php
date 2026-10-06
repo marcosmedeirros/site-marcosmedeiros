@@ -134,9 +134,7 @@ function cv_user(): ?array {
     return cv_query('SELECT id,email,name FROM cv_users WHERE id=?', [$_SESSION['user_id']])->fetch() ?: null;
 }
 
-function cv_csrf(?string $value = null): void {
-    cv_session();
-    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+function cv_origins(): array {
     $u = parse_url(cv_url());
     $allowed = [$u['scheme'] . '://' . $u['host'] . (isset($u['port']) ? ':' . $u['port'] : '')];
     // The host the browser actually reached is same-origin by definition; a page on another
@@ -145,7 +143,18 @@ function cv_csrf(?string $value = null): void {
         $scheme = ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') ?: ((($_SERVER['HTTPS'] ?? 'off') !== 'off') ? 'https' : 'http');
         $allowed[] = $scheme . '://' . $_SERVER['HTTP_HOST'];
     }
-    if ($origin !== '' && !in_array($origin, $allowed, true)) cv_fail('Origem não autorizada.', 403);
+    return $allowed;
+}
+
+// $sameOrigin is relaxed only where the unguessable form token is the whole protection and the
+// request legitimately arrives through an assistant's browser, which may report any origin.
+function cv_csrf(?string $value = null, bool $sameOrigin = true): void {
+    cv_session();
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    if ($origin !== '' && !in_array($origin, cv_origins(), true)) {
+        if ($sameOrigin) cv_fail('Origem não autorizada.', 403);
+        error_log('ControleVida: consentimento vindo da origem ' . $origin);
+    }
     if (!hash_equals($_SESSION['csrf'], $value ?? ($_SERVER['HTTP_X_CSRF_TOKEN'] ?? ''))) cv_fail('Sessão expirada. Atualize a página.', 403);
 }
 
