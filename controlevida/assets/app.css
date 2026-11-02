@@ -198,6 +198,14 @@ progress::-moz-progress-bar{background:var(--accent);border-radius:999px}
 .segments button{font-size:13px;font-weight:600;color:var(--muted);padding:8px 14px;border-radius:999px;white-space:nowrap;min-height:36px}
 .segments button:hover{color:var(--ink)}
 .segments .active{color:var(--accent-ink);background:var(--accent)}
+/* Two faces of the same area, side by side. */
+.view-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;margin-bottom:14px;
+  background:var(--surface);border:1px solid var(--line);border-radius:999px}
+.view-tabs button{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;
+  border-radius:999px;font-size:14px;font-weight:600;color:var(--muted)}
+.view-tabs button svg{width:17px;height:17px}
+.view-tabs button:hover{color:var(--ink)}
+.view-tabs .active{background:var(--accent);color:var(--accent-ink)}
 .search{position:relative;flex-direction:row;align-items:center;width:100%}
 .search svg{position:absolute;left:13px;width:16px;color:var(--faint);z-index:1}
 .search input{padding-left:38px;font-size:15px}
@@ -205,9 +213,10 @@ progress::-moz-progress-bar{background:var(--accent);border-radius:999px}
 .date-control input,.month-control input{flex:1;font-size:14px}
 .week-control>span{font-size:13.5px;font-weight:500;color:var(--muted);flex:1;text-align:center}
 .date-control .icon-button,.week-control .icon-button,.month-control .icon-button{background:var(--surface);border:1px solid var(--line)}
-.date-control,.week-control{flex-wrap:wrap}
-.date-control>.text-button,.week-control>.text-button{flex:1 0 100%;justify-content:center;min-height:42px;
-  background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm)}
+.date-control>.text-button{flex:0 0 auto;padding:0 10px;min-height:42px}
+.week-range{flex:1;min-width:0;text-align:center;font-size:13.5px;font-weight:600;color:var(--ink);
+  min-height:42px;border-radius:var(--r-sm)}
+.week-range:hover{background:var(--surface)}
 
 /* The week: one card per day, stacked on the phone. */
 .board{display:grid;grid-template-columns:1fr;gap:10px}
@@ -442,13 +451,15 @@ dialog::backdrop{background:rgba(0,0,0,.65)}
   .board{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .goal-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
   .settings-layout{gap:30px}
+  .view-tabs{display:inline-grid;grid-template-columns:auto auto;margin-bottom:18px}
+  .view-tabs button{padding:0 22px}
   .list-toolbar{flex-wrap:nowrap;justify-content:space-between}
   .search{width:260px}
   .finance-stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
   .finance-stats>div{display:block;padding:14px}
   .finance-stats .stat-label{margin-bottom:4px}
   .finance-stats strong{font-size:27px}
-  .date-control>.text-button,.week-control>.text-button{flex:0 0 auto;min-height:34px;background:none;border:0}
+  .date-control>.text-button{min-height:34px}
   .calendar-cell{min-height:74px;padding:9px 6px;align-items:flex-start}
   .habit-table-head,.habit-table-row{grid-template-columns:minmax(150px,1fr) 330px 40px;gap:16px;align-items:center}
   .habit-table-head{padding:0 14px 8px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);font-weight:600}
