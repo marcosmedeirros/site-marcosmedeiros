@@ -174,6 +174,7 @@ function render() {
   if(S.scrollBoard)showToday();
   if(S.view==='settings')loadConnections();
   if(S.view==='progress'&&!S.photos)loadPhotos();
+  $('#shell').classList.toggle('board-mode',S.view==='miro');
   if(S.view==='miro')mountBoard();
 }
 function navigate(view) { if(!views[view])view='today'; S.view=view; S.search='';S.filter=view==='workouts'?'today':'all';if(view!=='calendar')S.day=S.today; if(!['finance','calendar'].includes(view))S.month=S.today.slice(0,7); S.week=weekStart(S.today); S.scrollBoard=true; location.hash=view; setMenu(false);render(); }
@@ -485,7 +486,7 @@ function mountBoard() {
   applyBoard(); icons();
 }
 function miroView() {
-  return `${header('Quadro','SEU CADERNÃO, SEM LINHAS')}<div class="board-bar"><button class="primary compact" data-card-new="">${icon('plus')}Post-it</button><button class="secondary compact" data-card-pick>${icon('database')}Trazer do app</button><span class="board-zoom">${actionButton('zoom-out','Diminuir','data-board-zoom="out"')}<button class="text-button" data-board-zoom="reset" title="Voltar ao tamanho normal">100%</button>${actionButton('zoom-in','Aumentar','data-board-zoom="in"')}${actionButton('scan','Enquadrar tudo','data-board-fit')}</span><small class="muted" id="board-count"></small></div><div class="canvas" id="canvas"><div class="sheet" id="sheet"></div><p class="canvas-hint">Arraste o fundo para passear · dois dedos, ou Ctrl e a rolagem, para o zoom</p></div>`;
+  return `<div class="board-screen"><div class="canvas" id="canvas"><div class="sheet" id="sheet"></div><p class="canvas-hint">Arraste o fundo para passear · dois dedos, ou Ctrl e a rolagem, para o zoom</p></div><div class="board-tools board-tools-left">${actionButton('arrow-left','Voltar ao Controle Vida','data-view="today"')}<span class="board-brand">Quadro</span><button class="primary compact" data-card-new="">${icon('plus')}<span>Post-it</span></button><button class="secondary compact" data-card-pick>${icon('database')}<span>Trazer do app</span></button></div><div class="board-tools board-tools-right"><span class="board-zoom">${actionButton('zoom-out','Diminuir','data-board-zoom="out"')}<button class="text-button" data-board-zoom="reset" title="Voltar ao tamanho normal">100%</button>${actionButton('zoom-in','Aumentar','data-board-zoom="in"')}${actionButton('scan','Enquadrar tudo','data-board-fit')}</span><small class="muted" id="board-count"></small></div></div>`;
 }
 renderers.miro = miroView;
 try { const saved = JSON.parse(localStorage.getItem('cv-quadro')||'null'); if (saved && Number.isFinite(saved.zoom) && Number.isFinite(saved.x)) S.board = {x:saved.x,y:saved.y,zoom:Math.min(CARD_MAX_ZOOM,Math.max(CARD_MIN_ZOOM,saved.zoom))}; } catch {}

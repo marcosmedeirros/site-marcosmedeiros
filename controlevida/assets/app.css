@@ -421,12 +421,23 @@ dialog::backdrop{background:#000c}
 .copy-field input{flex:1;font-size:13px}
 
 /* Quadro — a dotted sheet that pans and zooms, with paper cards on top of it. */
-.board-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
-.board-zoom{display:flex;align-items:center;gap:2px;margin-left:auto;border:1px solid var(--line);border-radius:3px;padding:2px}
-.board-zoom .text-button{min-width:52px;justify-content:center;color:var(--muted)}
-.board-bar #board-count{flex:0 0 auto}
+/* The board takes the whole screen: no sidebar, no footer, only the sheet. */
+.board-mode .sidebar,.board-mode .app-footer,.board-mode .bottom-nav{display:none}
+.board-mode .main-wrap{margin-left:0;width:100%}
+.board-mode #main{max-width:none;padding:0}
+.board-screen{position:relative;height:100dvh;overflow:hidden}
+.board-tools{position:absolute;top:14px;z-index:4;display:flex;align-items:center;gap:7px;padding:7px;border:1px solid var(--line-strong);border-radius:999px;background:rgba(8,8,8,.92)}
+.board-tools-left{left:14px}
+.board-tools-right{right:14px;gap:2px}
+.board-brand{font-family:var(--serif);font-size:15px;padding:0 4px}
+.board-tools .primary,.board-tools .secondary{border-radius:999px}
+.board-tools .icon-button{width:32px;min-height:32px;border-radius:50%;color:var(--muted)}
+.board-tools .icon-button:hover{color:var(--ink)}
+.board-zoom{display:flex;align-items:center;gap:2px}
+.board-zoom .text-button{min-width:50px;justify-content:center;color:var(--muted)}
+#board-count{padding:0 10px 0 6px;white-space:nowrap}
 
-.canvas{position:relative;overflow:hidden;height:clamp(420px,calc(100vh - 290px),860px);border:1px solid var(--line);border-radius:4px;background:#050505;touch-action:none;cursor:grab;contain:paint}
+.canvas{position:absolute;inset:0;overflow:hidden;background:#050505;touch-action:none;cursor:grab;contain:paint}
 .canvas.is-panning{cursor:grabbing}
 .sheet{position:absolute;inset:0;transform-origin:0 0;will-change:transform}
 .sheet::before{content:"";position:absolute;left:-6000px;top:-6000px;width:12000px;height:12000px;background-image:radial-gradient(circle at 1px 1px,#1f1f1f 1px,transparent 0);background-size:26px 26px;pointer-events:none}
@@ -491,7 +502,10 @@ dialog::backdrop{background:#000c}
 .quick-label{padding:14px 2px 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
 
 @media (max-width:720px){
-  .canvas{height:clamp(380px,calc(100vh - 250px),680px)}
-  .board-zoom{margin-left:0}
-  .board-bar #board-count{width:100%}
+  .board-tools{top:10px;padding:5px;gap:5px}
+  .board-tools-left{left:10px}
+  .board-tools-right{right:10px}
+  .board-brand,#board-count,.board-zoom .text-button{display:none}
+  .board-tools .compact{width:34px;padding:0;justify-content:center}
+  .board-tools .compact span{display:none}
 }
