@@ -11,9 +11,10 @@
   --faint:#70707a;
   --line:#1f1f25;
   --line-strong:#34343d;
-  --accent:#ff5257;
-  --accent-ink:#2b0004;
-  --accent-soft:rgba(255,82,87,.16);
+  --accent:#d8343a;
+  --accent-text:#f4565c;
+  --accent-ink:#fff;
+  --accent-soft:rgba(216,52,58,.2);
   --green:#3ddc97;
   --red:#ff8f98;
   --r:18px;
@@ -73,11 +74,11 @@ label input,label textarea,label select{color:var(--ink)}
 .primary,.secondary,.text-button,.icon-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;
   font-size:14px;font-weight:600;border-radius:var(--r-sm);transition:background .15s,border-color .15s,color .15s}
 .primary{background:var(--accent);color:var(--accent-ink);padding:13px 22px;min-height:50px;border-radius:999px;font-size:15px}
-.primary:hover{background:#ff7a7e}
+.primary:hover{background:#e8454b}
 .secondary{background:var(--surface);border:1px solid var(--line-strong);padding:13px 20px;min-height:50px;border-radius:999px}
 .secondary:hover{border-color:var(--line-strong);background:var(--surface-2)}
-.text-button{color:var(--accent);min-height:34px;font-size:13.5px}
-.text-button:hover{color:#ff8a8e}
+.text-button{color:var(--accent-text);min-height:34px;font-size:13.5px}
+.text-button:hover{color:#ff7176}
 .icon-button{width:40px;height:40px;flex:0 0 40px;color:var(--muted);border-radius:var(--r-sm)}
 .icon-button:hover{color:var(--ink);background:var(--surface-2)}
 .full{width:100%}
@@ -112,7 +113,7 @@ label input,label textarea,label select{color:var(--ink)}
 .nav-item{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:11px 12px;border-radius:var(--r-sm);
   color:var(--muted);font-size:14.5px;font-weight:500;min-height:var(--tap)}
 .nav-item:hover{color:var(--ink);background:var(--surface-2)}
-.nav-item.active{color:var(--accent);background:var(--accent-soft)}
+.nav-item.active{color:var(--accent-text);background:var(--accent-soft)}
 .nav-item svg{width:18px;height:18px}
 .sidebar-bottom{margin-top:auto;padding-top:20px}
 .account{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);margin-top:14px;padding:14px 4px 0;font-size:13px}
@@ -129,7 +130,7 @@ label input,label textarea,label select{color:var(--ink)}
 .bottom-item{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:54px;
   border-radius:var(--r-sm);font-size:11px;font-weight:600;color:var(--faint)}
 .bottom-item svg{width:22px;height:22px}
-.bottom-item.active{color:var(--accent);background:var(--accent-soft)}
+.bottom-item.active{color:var(--accent-text);background:var(--accent-soft)}
 
 .page-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:22px}
 .page-heading h1{overflow-wrap:anywhere}
@@ -145,7 +146,7 @@ label input,label textarea,label select{color:var(--ink)}
 .overview-band small{font-size:12.5px;font-weight:400;color:var(--muted)}
 .daily-progress{grid-column:1/-1}
 .daily-progress>div{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.daily-progress>div>span{color:var(--accent);font-size:13px;font-weight:600}
+.daily-progress>div>span{color:var(--accent-text);font-size:13px;font-weight:600}
 .daily-progress progress{margin-top:10px}
 progress{width:100%;height:6px;display:block;appearance:none;border:0;border-radius:999px;background:var(--surface-2);overflow:hidden}
 progress::-webkit-progress-bar{background:var(--surface-2);border-radius:999px}
@@ -165,7 +166,7 @@ progress::-moz-progress-bar{background:var(--accent);border-radius:999px}
 .record-row:hover{border-color:var(--line-strong)}
 .record-copy{flex:1;min-width:0}
 .record-title{text-align:left;font-size:16px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
-.record-title:hover{color:var(--accent)}
+.record-title:hover{color:var(--accent-text)}
 .record-meta{margin-top:3px;font-size:12px;overflow-wrap:anywhere;color:var(--faint)}
 .record-note{font-size:13.5px;margin-top:7px;white-space:pre-wrap;color:var(--muted);overflow-wrap:anywhere}
 .is-done{opacity:.6}
@@ -173,7 +174,7 @@ progress::-moz-progress-bar{background:var(--accent);border-radius:999px}
 .check{display:grid;place-items:center;flex:0 0 27px;width:27px;height:27px;
   border:2px solid var(--line-strong);border-radius:50%;color:transparent;transition:background .15s,border-color .15s}
 .check:hover{border-color:var(--tone,var(--accent))}
-.check.checked{background:var(--tone,var(--accent));border-color:var(--tone,var(--accent));color:#2b0004}
+.check.checked{background:var(--tone,var(--accent));border-color:var(--tone,var(--accent));color:#fff}
 .check svg{width:15px;height:15px;stroke-width:3}
 .record-icon{display:grid;place-items:center;flex:0 0 34px;width:34px;height:34px;border-radius:11px;
   color:var(--tone,var(--faint));background:color-mix(in srgb,var(--tone,var(--accent)) 16%,transparent)}
@@ -233,10 +234,10 @@ progress::-moz-progress-bar{background:var(--accent);border-radius:999px}
 .day-card.over{background:var(--accent-soft);border-color:var(--accent)}
 .day-card>header{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-bottom:4px}
 .day-card h2{font-size:15.5px}
-.day-card.is-today h2{color:var(--accent)}
+.day-card.is-today h2{color:var(--accent-text)}
 .day-card>header small{color:var(--faint);font-size:11.5px}
 .day-card .text-button{align-self:flex-start;margin-top:4px;color:var(--faint)}
-.day-card .text-button:hover{color:var(--accent)}
+.day-card .text-button:hover{color:var(--accent-text)}
 .day-card .text-button svg{width:15px;height:15px}
 .loose-card{border-style:dashed}
 .day-tasks{display:flex;flex-direction:column}
@@ -250,7 +251,7 @@ progress::-moz-progress-bar{background:var(--accent);border-radius:999px}
 .board-task.is-done .record-title{text-decoration:line-through;color:var(--faint)}
 .grip{display:grid;place-items:center;width:34px;height:34px;flex:0 0 34px;color:var(--faint);
   border-radius:var(--r-sm);cursor:grab;touch-action:none}
-.grip:hover{color:var(--accent);background:var(--surface-2)}
+.grip:hover{color:var(--accent-text);background:var(--surface-2)}
 .grip svg{width:16px;height:16px}
 .drag-ghost{position:fixed;top:0;left:0;z-index:200;pointer-events:none;padding:11px 15px;background:var(--surface);
   border:1px solid var(--accent);border-radius:var(--r-sm);box-shadow:0 12px 30px rgba(0,0,0,.5);font-size:13.5px;
@@ -293,10 +294,10 @@ progress::-moz-progress-bar{background:var(--accent);border-radius:999px}
 .calendar-grid{gap:4px}
 .calendar-cell{min-height:52px;padding:7px 4px;display:flex;flex-direction:column;align-items:center;gap:3px;
   border:1px solid transparent;border-radius:var(--r-sm);background:var(--surface);font-size:13.5px;color:var(--muted)}
-.calendar-cell small{font-size:9.5px;color:var(--accent);font-weight:600}
+.calendar-cell small{font-size:9.5px;color:var(--accent-text);font-weight:600}
 .calendar-cell.other-month{background:transparent;color:#4b515c}
 .calendar-cell.selected{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
-.calendar-cell.is-today>span{color:var(--accent);font-weight:700}
+.calendar-cell.is-today>span{color:var(--accent-text);font-weight:700}
 .agenda-day{padding-left:0}
 .export-calendar{margin-top:14px}
 
@@ -314,7 +315,7 @@ progress::-moz-progress-bar{background:var(--accent);border-radius:999px}
 .habit-cell{height:42px;display:grid;place-items:center;border:1px solid var(--line);border-radius:var(--r-sm);
   background:var(--surface-2);width:100%;color:transparent}
 .habit-cell>span{width:4px;height:4px;border-radius:50%;background:var(--faint)}
-.habit-cell.checked{background:var(--tone,var(--accent));border-color:var(--tone,var(--accent));color:#2b0004}
+.habit-cell.checked{background:var(--tone,var(--accent));border-color:var(--tone,var(--accent));color:#fff}
 .habit-cell:disabled{background:transparent;border-color:var(--line);opacity:1}
 .habit-cell:disabled>span{background:#30343d}
 .habit-cell svg{width:15px;stroke-width:3}
@@ -332,7 +333,7 @@ progress::-moz-progress-bar{background:var(--accent);border-radius:999px}
 .meal-record>.icon-button{position:absolute;right:8px;top:10px}
 .reflection{margin-top:12px;padding:10px 12px;background:var(--surface-2);border-radius:var(--r-sm);font-size:13.5px;color:var(--muted)}
 .reflection>span{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;
-  color:var(--accent);font-weight:600;margin-bottom:5px}
+  color:var(--accent-text);font-weight:600;margin-bottom:5px}
 .reflection svg{width:13px;height:13px}
 .goal-grid{display:grid;grid-template-columns:1fr;gap:8px}
 .goal-item{padding:14px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
@@ -389,12 +390,12 @@ dialog::backdrop{background:rgba(0,0,0,.65)}
 .weekday-options input{position:absolute;opacity:0;width:0}
 .weekday-options span{display:block;padding:11px 0;text-align:center;background:var(--surface-2);
   border:1px solid var(--line);border-radius:var(--r-sm);font-size:11.5px;font-weight:600;color:var(--muted)}
-.weekday-options input:checked+span{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.weekday-options input:checked+span{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-text)}
 .quick-options{padding:8px 18px calc(22px + env(safe-area-inset-bottom))}
 .quick-options button{display:flex;align-items:center;gap:13px;width:100%;padding:14px;margin-bottom:6px;
   background:var(--surface-2);border-radius:var(--r-sm);font-size:14.5px;font-weight:500;text-align:left;min-height:var(--tap)}
 .quick-options button:hover{background:var(--line)}
-.quick-options button svg:first-child{color:var(--accent);width:18px}
+.quick-options button svg:first-child{color:var(--accent-text);width:18px}
 .quick-options button svg:last-child{margin-left:auto;width:15px;color:var(--faint)}
 
 /* Sync notice, only while saving or failing. */
