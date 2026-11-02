@@ -115,6 +115,8 @@ label input,label textarea,label select{color:var(--ink)}
 .nav-item:hover{color:var(--ink);background:var(--surface-2)}
 .nav-item.active{color:var(--accent-text);background:var(--accent-soft)}
 .nav-item svg{width:18px;height:18px}
+/* No celular o Quadro se alcança pelo endereço, não pelo menu. */
+.nav-board{display:none}
 .sidebar-bottom{margin-top:auto;padding-top:20px}
 .account{display:flex;align-items:center;gap:10px;border-top:1px solid var(--line);margin-top:14px;padding:14px 4px 0;font-size:13px}
 .account img{border-radius:10px}
@@ -448,6 +450,7 @@ dialog::backdrop{background:rgba(0,0,0,.65)}
   #main{padding:34px 28px 0}
   .app-footer{padding:36px 28px}
   .sidebar{transform:none;transition:none;width:244px;max-width:none;padding:26px 16px 18px;background:#000}
+  .nav-board{display:flex;margin-top:10px;padding-top:14px;border-top:1px solid var(--line)}
   .menu-open .menu-backdrop{display:none}
   .main-wrap{margin-left:244px;width:calc(100% - 244px);padding-bottom:0}
   .bottom-nav{display:none}

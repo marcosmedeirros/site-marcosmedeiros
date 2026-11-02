@@ -174,7 +174,7 @@ const renderers={today:dashboard,tasks:tasksView,calendar:calendarView,habits:ha
 function render() {
   if(!S.user)return;
   document.title=`${views[S.view][0]} · Controle Vida`;
-  $('#navigation').innerHTML=Object.entries(views).filter(([k])=>!hiddenViews.includes(k)).map(([key,[name,i]])=>`<button class="nav-item ${key===S.view?'active':''}" data-view="${key}" ${key===S.view?'aria-current="page"':''}>${icon(i)}<span>${name}</span></button>`).join('');
+  $('#navigation').innerHTML=Object.entries(views).filter(([k])=>!hiddenViews.includes(k)).map(([key,[name,i]])=>`<button class="nav-item ${key===S.view?'active':''}" data-view="${key}" ${key===S.view?'aria-current="page"':''}>${icon(i)}<span>${name}</span></button>`).join('')+`<button class="nav-item nav-board ${S.view==='miro'?'active':''}" data-view="miro">${icon('sticky-note')}<span>Quadro</span></button>`;
   $('#bottom-nav').innerHTML=bottomNav.map(([key,label])=>`<button class="bottom-item ${key===S.view?'active':''}" data-view="${key}" ${key===S.view?'aria-current="page"':''}>${icon(views[key][1])}<span>${label}</span></button>`).join('');
   $('#main').innerHTML=renderers[S.view]();
   $('#footer-date').textContent=longDate(S.today);
