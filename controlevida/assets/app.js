@@ -420,6 +420,7 @@ const liveCards = {saldo:['Saldo do mês','wallet'],tarefas_dia:['Tarefas do dia
 // A line that can be ticked and unticked straight from the board.
 const cardTask = (r,day,note='') => `<li class="${done(r,day)?'is-done':''}"><button class="card-check ${done(r,day)?'on':''}" data-check="${r.id}" data-day="${day}" aria-pressed="${done(r,day)}" aria-label="${done(r,day)?'Desmarcar':'Concluir'} ${esc(r.title)}">${icon('check')}</button><span>${esc(r.title)}</span>${note?`<small>${esc(note)}</small>`:''}</li>`;
 const byDone = (list,day) => list.sort((a,b) => Number(done(a,day))-Number(done(b,day)));
+const pickableCards = ['saldo','tarefas_dia','tarefas_semana','pendencias','habitos','agenda'];
 const CARD_MIN_W = 150, CARD_MIN_H = 110, CARD_MAX_ZOOM = 2.4, CARD_MIN_ZOOM = 0.3;
 const boardCards = () => S.cards.filter(c => (c.details.board||'principal') === 'principal');
 const cardOf = id => S.cards.find(c => c.id === id);
@@ -552,7 +553,7 @@ function setCardColor(id,color) {
 }
 function pickCard() {
   $('#quick-menu h2').textContent = 'O que trazer para o quadro?';
-  const live = Object.entries(liveCards).map(([key,[label,i]]) => `<button data-card-new="${key}">${icon(i)}${label}${icon('chevron-right')}</button>`).join('');
+  const live = pickableCards.map(key => `<button data-card-new="${key}">${icon(liveCards[key][1])}${liveCards[key][0]}${icon('chevron-right')}</button>`).join('');
   const open = S.records.filter(r => ['task','event','goal'].includes(r.kind) && r.status !== 'done')
     .sort((a,b) => (a.day||'9999-99-99').localeCompare(b.day||'9999-99-99')).slice(0,12);
   $('#quick-options').innerHTML = live + (open.length ? `<p class="quick-label">Tarefas, compromissos e metas</p>${open.map(r => `<button data-card-new="rec:${r.id}">${icon(kinds[r.kind][1])}${esc(r.title)}${icon('chevron-right')}</button>`).join('')}` : '');
