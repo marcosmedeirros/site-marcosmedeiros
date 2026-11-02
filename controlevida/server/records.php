@@ -77,7 +77,7 @@ function cv_details(string $kind, array $d, array $old = []): array {
     // A board card keeps where it sits and what it mirrors; its text lives in notes.
     if ($kind === 'card') {
         $ref = cv_text($d['ref'] ?? '',60);
-        if ($ref !== '' && !preg_match('/^(?:[a-z]{3,20}|rec:[A-Za-z0-9]{1,40})$/',$ref)) cv_fail('Referência inválida.');
+        if ($ref !== '' && !preg_match('/^(?:[a-z][a-z_]{2,19}|rec:[A-Za-z0-9]{1,40})$/',$ref)) cv_fail('Referência inválida.');
         $out += ['board' => cv_text($d['board'] ?? 'principal',40) ?: 'principal', 'x' => cv_int($d['x'] ?? 0,-200000,200000), 'y' => cv_int($d['y'] ?? 0,-200000,200000), 'w' => cv_int($d['w'] ?? 240,140,2000), 'h' => cv_int($d['h'] ?? 190,90,2000), 'color' => cv_enum($d['color'] ?? 'amarelo',CV_CARD_COLORS), 'ref' => $ref];
     }
     if ($kind === 'workout') {

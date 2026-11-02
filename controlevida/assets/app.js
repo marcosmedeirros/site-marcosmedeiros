@@ -411,7 +411,10 @@ if($('#login-form')){
 
 /* Quadro: an open canvas. Post-its hold loose text; live cards mirror what the app already knows. */
 const cardColors = {amarelo:'Amarelo',azul:'Azul',verde:'Verde',rosa:'Rosa',branco:'Branco'};
-const liveCards = {saldo:['Saldo do mês','wallet'],pendencias:['Pendências de hoje','list-checks'],habitos:['Hábitos da semana','circle-check'],agenda:['Próximos compromissos','calendar-days'],treinos:['Movimento da semana','activity'],refeicoes:['Alimentação de hoje','utensils']};
+const liveCards = {saldo:['Saldo do mês','wallet'],tarefas_dia:['Tarefas do dia','list-todo'],tarefas_semana:['Tarefas da semana','calendar-check'],pendencias:['Pendências de hoje','list-checks'],habitos:['Hábitos da semana','circle-check'],agenda:['Próximos compromissos','calendar-days'],treinos:['Movimento da semana','activity'],refeicoes:['Alimentação de hoje','utensils']};
+// A line that can be ticked and unticked straight from the board.
+const cardTask = (r,day,note='') => `<li class="${done(r,day)?'is-done':''}"><button class="card-check ${done(r,day)?'on':''}" data-check="${r.id}" data-day="${day}" aria-pressed="${done(r,day)}" aria-label="${done(r,day)?'Desmarcar':'Concluir'} ${esc(r.title)}">${icon('check')}</button><span>${esc(r.title)}</span>${note?`<small>${esc(note)}</small>`:''}</li>`;
+const byDone = (list,day) => list.sort((a,b) => Number(done(a,day))-Number(done(b,day)));
 const CARD_MIN_W = 150, CARD_MIN_H = 110, CARD_MAX_ZOOM = 2.4, CARD_MIN_ZOOM = 0.3;
 const boardCards = () => S.cards.filter(c => (c.details.board||'principal') === 'principal');
 const cardOf = id => S.cards.find(c => c.id === id);
@@ -440,9 +443,22 @@ function liveBody(c) {
     const open = ['task','habit','workout'].flatMap(k => records(k)).filter(r => due(r,S.today) && !done(r,S.today));
     return `${label}<strong class="card-figure">${open.length}<small> para hoje</small></strong>${cardList(open.slice(0,6).map(r => `<li><button data-check="${r.id}" data-day="${S.today}" class="card-check" aria-label="Concluir ${esc(r.title)}">${icon('check')}</button><span>${esc(r.title)}</span></li>`),'Nada em aberto. Dia limpo.')}`;
   }
+  if (ref === 'tarefas_dia') {
+    const list = records('task').filter(r => due(r,S.today));
+    const open = list.filter(r => !done(r,S.today)).length;
+    return `${label}<strong class="card-figure">${open}<small> em aberto</small></strong>${cardList(byDone([...list],S.today).map(r => cardTask(r,S.today,r.details.time||'')),'Nenhuma tarefa para hoje.')}`;
+  }
+  if (ref === 'tarefas_semana') {
+    const start = weekStart(S.today), lines = [];
+    for (let i = 0; i < 7; i++) {
+      const day = shift(start,i);
+      byDone(records('task').filter(r => onBoardDay(r,day)),day).forEach(r => lines.push(cardTask(r,day,days[weekday(day)-1])));
+    }
+    return `${label}${cardList(lines,'Semana sem tarefas marcadas.')}`;
+  }
   if (ref === 'habitos') {
     const week = Array.from({length:7},(_,i) => shift(S.today,i-6));
-    return `${label}${cardList(records('habit').slice(0,6).map(r => `<li><span>${esc(r.title)}</span><span class="card-dots">${week.map(d => `<i class="${done(r,d)?'on':''}"></i>`).join('')}</span></li>`),'Nenhum hábito cadastrado.')}`;
+    return `${label}${cardList(records('habit').slice(0,6).map(r => `<li><span>${esc(r.title)}</span><span class="card-dots">${week.map(d => `<button class="${done(r,d)?'on':''}" data-check="${r.id}" data-day="${d}" aria-pressed="${done(r,d)}" aria-label="${esc(r.title)} em ${dayLabel(d)}" ${due(r,d)?'':'disabled'}></button>`).join('')}</span></li>`),'Nenhum hábito cadastrado.')}`;
   }
   if (ref === 'agenda') {
     const next = records('event').filter(r => r.day >= S.today && r.status !== 'done').sort((a,b) => (a.day+(a.details.time||'')).localeCompare(b.day+(b.details.time||''))).slice(0,5);
