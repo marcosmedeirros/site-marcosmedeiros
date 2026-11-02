@@ -553,8 +553,9 @@ function setCardColor(id,color) {
 function pickCard() {
   $('#quick-menu h2').textContent = 'O que trazer para o quadro?';
   const live = Object.entries(liveCards).map(([key,[label,i]]) => `<button data-card-new="${key}">${icon(i)}${label}${icon('chevron-right')}</button>`).join('');
-  const open = S.records.filter(r => ['task','event','goal','note'].includes(r.kind) && r.status !== 'done').slice(0,12);
-  $('#quick-options').innerHTML = live + (open.length ? `<p class="quick-label">Registros de agora</p>${open.map(r => `<button data-card-new="rec:${r.id}">${icon(kinds[r.kind][1])}${esc(r.title)}${icon('chevron-right')}</button>`).join('')}` : '');
+  const open = S.records.filter(r => ['task','event','goal'].includes(r.kind) && r.status !== 'done')
+    .sort((a,b) => (a.day||'9999-99-99').localeCompare(b.day||'9999-99-99')).slice(0,12);
+  $('#quick-options').innerHTML = live + (open.length ? `<p class="quick-label">Tarefas, compromissos e metas</p>${open.map(r => `<button data-card-new="rec:${r.id}">${icon(kinds[r.kind][1])}${esc(r.title)}${icon('chevron-right')}</button>`).join('')}` : '');
   $('#quick-menu').showModal(); icons();
 }
 // Zoom keeps the point under the cursor, or between the fingers, where it is.
