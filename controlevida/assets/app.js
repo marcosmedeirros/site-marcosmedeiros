@@ -420,11 +420,20 @@ if($('#login-form')){
 
 /* Quadro: an open canvas. Post-its hold loose text; live cards mirror what the app already knows. */
 const cardColors = {amarelo:'Amarelo',azul:'Azul',verde:'Verde',rosa:'Rosa',branco:'Branco'};
-const liveCards = {saldo:['Saldo do mês','wallet'],tarefas_dia:['Tarefas do dia','list-todo'],tarefas_semana:['Tarefas da semana','calendar-check'],pendencias:['Pendências de hoje','list-checks'],habitos:['Hábitos da semana','circle-check'],agenda:['Próximos compromissos','calendar-days'],treinos:['Movimento da semana','activity'],refeicoes:['Alimentação de hoje','utensils']};
+const liveCards = {saldo:['Saldo do mês','wallet'],metas_abertas:['Metas a cumprir','flag'],metas_todas:['Metas','target'],metas_prazo:['Metas por prazo','calendar-clock'],nota_nova:['Criar nota','file-plus-2'],nota_dia:['Nota do dia','notebook-pen'],tarefas_dia:['Tarefas do dia','list-todo'],tarefas_semana:['Tarefas da semana','calendar-check'],pendencias:['Pendências de hoje','list-checks'],habitos:['Hábitos da semana','circle-check'],agenda:['Próximos compromissos','calendar-days'],treinos:['Movimento da semana','activity'],refeicoes:['Alimentação de hoje','utensils']};
 // A line that can be ticked and unticked straight from the board.
 const cardTask = (r,day,note='') => `<li class="${done(r,day)?'is-done':''}"><button class="card-check ${done(r,day)?'on':''}" data-check="${r.id}" data-day="${day}" aria-pressed="${done(r,day)}" aria-label="${done(r,day)?'Desmarcar':'Concluir'} ${esc(r.title)}">${icon('check')}</button><span>${esc(r.title)}</span>${note?`<small>${esc(note)}</small>`:''}</li>`;
 const byDone = (list,day) => list.sort((a,b) => Number(done(a,day))-Number(done(b,day)));
-const pickableCards = ['saldo','tarefas_dia','tarefas_semana','pendencias','habitos','agenda'];
+const pickableCards = ['saldo','tarefas_dia','tarefas_semana','pendencias','habitos','agenda',
+  'metas_abertas','metas_todas','metas_prazo','nota_dia','nota_nova'];
+// Quanto falta, em dias, para o prazo de uma meta.
+const prazo = day => {
+  if (!day) return 'sem prazo';
+  const dias = Math.round((dateObject(day)-dateObject(S.today))/86400000);
+  if (dias === 0) return 'é hoje';
+  return dias > 0 ? `em ${dias} dia${dias>1?'s':''}` : `${-dias} dia${dias<-1?'s':''} atrás`;
+};
+const porPrazo = (a,b) => (a.day||'9999-99-99').localeCompare(b.day||'9999-99-99');
 const CARD_MIN_W = 150, CARD_MIN_H = 110, CARD_MAX_ZOOM = 2.4, CARD_MIN_ZOOM = 0.3;
 const boardCards = () => S.cards.filter(c => (c.details.board||'principal') === 'principal');
 const cardOf = id => S.cards.find(c => c.id === id);
@@ -452,6 +461,26 @@ function liveBody(c) {
   if (ref === 'pendencias') {
     const open = ['task','habit','workout'].flatMap(k => records(k)).filter(r => due(r,S.today) && !done(r,S.today));
     return `${label}<strong class="card-figure">${open.length}<small> para hoje</small></strong>${cardList(open.slice(0,6).map(r => `<li><button data-check="${r.id}" data-day="${S.today}" class="card-check" aria-label="Concluir ${esc(r.title)}">${icon('check')}</button><span>${esc(r.title)}</span></li>`),'Nada em aberto. Dia limpo.')}`;
+  }
+  if (ref === 'metas_abertas') {
+    const list = records('goal').filter(r => !done(r,S.today)).sort(porPrazo);
+    return `${label}<strong class="card-figure">${list.length}<small> em aberto</small></strong>${cardList(list.map(r => cardTask(r,r.day||S.today,prazo(r.day))),'Nenhuma meta em aberto.')}`;
+  }
+  if (ref === 'metas_todas') {
+    const list = [...records('goal')].sort((a,b) => Number(done(a,S.today))-Number(done(b,S.today)) || porPrazo(a,b));
+    const feitas = list.filter(r => done(r,S.today)).length;
+    return `${label}<strong class="card-figure">${feitas}<small> de ${list.length} cumpridas</small></strong>${cardList(list.map(r => cardTask(r,r.day||S.today,r.day?dayLabel(r.day):'')),'Nenhuma meta cadastrada.')}`;
+  }
+  if (ref === 'metas_prazo') {
+    const list = records('goal').filter(r => r.day).sort(porPrazo);
+    return `${label}${cardList(list.map(r => cardTask(r,r.day,prazo(r.day))),'Nenhuma meta com prazo marcado.')}`;
+  }
+  if (ref === 'nota_nova') {
+    return `${label}<form class="card-form"><textarea name="note" rows="3" maxlength="12000" aria-label="Nova nota" placeholder="O que merece ficar registrado?"></textarea><button class="text-button" type="submit">${icon('plus')}Guardar nota</button></form>`;
+  }
+  if (ref === 'nota_dia') {
+    const hoje = records('note').filter(r => r.day === S.today);
+    return `${label}${hoje.length ? hoje.map(r => `<p class="card-body">${esc(r.details.notes||r.title)}</p>`).join('') : '<p class="card-empty">Nada anotado hoje.</p>'}`;
   }
   if (ref === 'tarefas_dia') {
     const list = records('task').filter(r => due(r,S.today));
@@ -557,10 +586,7 @@ function setCardColor(id,color) {
 }
 function pickCard() {
   $('#quick-menu h2').textContent = 'O que trazer para o quadro?';
-  const live = pickableCards.map(key => `<button data-card-new="${key}">${icon(liveCards[key][1])}${liveCards[key][0]}${icon('chevron-right')}</button>`).join('');
-  const open = S.records.filter(r => ['task','event','goal'].includes(r.kind) && r.status !== 'done')
-    .sort((a,b) => (a.day||'9999-99-99').localeCompare(b.day||'9999-99-99')).slice(0,12);
-  $('#quick-options').innerHTML = live + (open.length ? `<p class="quick-label">Tarefas, compromissos e metas</p>${open.map(r => `<button data-card-new="rec:${r.id}">${icon(kinds[r.kind][1])}${esc(r.title)}${icon('chevron-right')}</button>`).join('')}` : '');
+  $('#quick-options').innerHTML = pickableCards.map(key => `<button data-card-new="${key}">${icon(liveCards[key][1])}${liveCards[key][0]}${icon('chevron-right')}</button>`).join('');
   $('#quick-menu').showModal(); icons();
 }
 // Zoom keeps the point under the cursor, or between the fingers, where it is.
@@ -649,6 +675,15 @@ document.addEventListener('input',event => {
   queueCard(c.id);
 });
 // Pasted text arrives plain, so a copied page never brings its markup into the board.
+document.addEventListener('submit',async event => {
+  const form = event.target.closest('.card-form'); if (!form) return;
+  event.preventDefault();
+  const texto = String(new FormData(form).get('note')||'').trim(); if (!texto) return;
+  try {
+    const r = await api('save',{kind:'note',title:`Nota de ${dayLabel(S.today)}`,day:S.today,details:{notes:texto}});
+    S.records.push(r); form.reset(); mountBoard(); toast('Nota guardada.');
+  } catch(e) { toast(e.message); }
+});
 document.addEventListener('paste',event => {
   if (!event.target.closest?.('[data-text]')) return;
   event.preventDefault();
