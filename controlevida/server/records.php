@@ -2,7 +2,10 @@
 declare(strict_types=1);
 require_once __DIR__ . '/core.php';
 
-const CV_KINDS = ['transaction','task','event','habit','workout','meal','note','goal'];
+const CV_KINDS = ['transaction','task','event','habit','workout','meal','note','goal','card'];
+// The board's post-its are records like any other; the assistant keeps to the diary kinds.
+const CV_MCP_KINDS = ['transaction','task','event','habit','workout','meal','note','goal'];
+const CV_CARD_COLORS = ['amarelo','azul','verde','rosa','branco'];
 
 function cv_text($value, int $max = 1000): string {
     if (!is_string($value) || mb_strlen($value) > $max) cv_fail('Texto inválido ou muito longo.');
@@ -71,6 +74,12 @@ function cv_details(string $kind, array $d, array $old = []): array {
         $out['meal'] = cv_enum($d['meal'] ?? 'almoco',['cafe','almoco','lanche','jantar','outro']);
         $out['reflection'] = cv_text($d['reflection'] ?? '',8000);
     }
+    // A board card keeps where it sits and what it mirrors; its text lives in notes.
+    if ($kind === 'card') {
+        $ref = cv_text($d['ref'] ?? '',60);
+        if ($ref !== '' && !preg_match('/^(?:[a-z]{3,20}|rec:[A-Za-z0-9]{1,40})$/',$ref)) cv_fail('Referência inválida.');
+        $out += ['board' => cv_text($d['board'] ?? 'principal',40) ?: 'principal', 'x' => cv_int($d['x'] ?? 0,-200000,200000), 'y' => cv_int($d['y'] ?? 0,-200000,200000), 'w' => cv_int($d['w'] ?? 240,140,2000), 'h' => cv_int($d['h'] ?? 190,90,2000), 'color' => cv_enum($d['color'] ?? 'amarelo',CV_CARD_COLORS), 'ref' => $ref];
+    }
     if ($kind === 'workout') {
         $out['activity'] = cv_enum($d['activity'] ?? 'caminhada',['caminhada','corrida','forca','futebol','mobilidade','descanso','outro']);
         $out['duration_min'] = cv_int($d['duration_min'] ?? 0,0,1440);
@@ -103,7 +112,7 @@ function cv_save(string $user, array $input, string $source = 'web'): array {
     if ($old && $old['status'] === 'archived') cv_fail('Restaure o registro antes de editar.');
     $kind = cv_enum($input['kind'] ?? '',CV_KINDS);
     if ($old && $old['kind'] !== $kind) cv_fail('O tipo do registro não pode mudar.');
-    $day = cv_day($input['day'] ?? date('Y-m-d'), in_array($kind,['task','note','goal','habit','workout'],true));
+    $day = cv_day($input['day'] ?? date('Y-m-d'), in_array($kind,['task','note','goal','habit','workout','card'],true));
     // Money is organised by month, so the stored day is always the first of it.
     if ($kind === 'transaction') $day = substr($day,0,7) . '-01';
     if (!is_array($input['details'] ?? [])) cv_fail('Detalhes inválidos.');

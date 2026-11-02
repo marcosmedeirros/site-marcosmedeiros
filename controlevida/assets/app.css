@@ -419,3 +419,79 @@ dialog::backdrop{background:#000c}
 #strava-form .text-button{margin-top:16px}
 .copy-field{display:flex;align-items:center;gap:8px}
 .copy-field input{flex:1;font-size:13px}
+
+/* Quadro — a dotted sheet that pans and zooms, with paper cards on top of it. */
+.board-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:0 0 14px}
+.board-zoom{display:flex;align-items:center;gap:2px;margin-left:auto;border:1px solid var(--line);border-radius:3px;padding:2px}
+.board-zoom .text-button{min-width:52px;justify-content:center;color:var(--muted)}
+.board-bar #board-count{flex:0 0 auto}
+
+.canvas{position:relative;overflow:hidden;height:clamp(420px,calc(100vh - 290px),860px);border:1px solid var(--line);border-radius:4px;background:#050505;touch-action:none;cursor:grab;contain:paint}
+.canvas.is-panning{cursor:grabbing}
+.sheet{position:absolute;inset:0;transform-origin:0 0;will-change:transform}
+.sheet::before{content:"";position:absolute;left:-6000px;top:-6000px;width:12000px;height:12000px;background-image:radial-gradient(circle at 1px 1px,#1f1f1f 1px,transparent 0);background-size:26px 26px;pointer-events:none}
+.canvas-hint{position:absolute;left:0;right:0;bottom:0;padding:8px 12px;font-size:11px;color:var(--faint);text-align:center;background:linear-gradient(transparent,#050505);pointer-events:none}
+
+.card-note{--paper:#f6e2a0;--paper-ink:#2c2409;--paper-line:rgba(0,0,0,.14);
+  position:absolute;display:flex;flex-direction:column;background:var(--paper);color:var(--paper-ink);
+  border-radius:3px;box-shadow:0 10px 24px rgba(0,0,0,.55);overflow:hidden}
+.card-note.is-moving{box-shadow:0 18px 40px rgba(0,0,0,.7);z-index:5}
+.card-note.tone-azul{--paper:#bed6f1;--paper-ink:#0c1d31}
+.card-note.tone-verde{--paper:#bfdfc3;--paper-ink:#0d2113}
+.card-note.tone-rosa{--paper:#f0c7d2;--paper-ink:#2c1017}
+.card-note.tone-branco{--paper:#eceae4;--paper-ink:#1b1b19}
+/* A card that mirrors the app keeps the app's own dark surface. */
+.card-note.is-live{--paper:#0d0d0d;--paper-ink:var(--ink);--paper-line:var(--line-strong);border:1px solid var(--line-strong);box-shadow:0 10px 24px rgba(0,0,0,.45)}
+
+.card-bar{display:flex;align-items:center;gap:6px;padding:4px 6px;border-bottom:1px solid var(--paper-line);opacity:.35;transition:opacity .15s}
+.card-note:hover .card-bar,.card-note:focus-within .card-bar,.card-note.is-moving .card-bar{opacity:1}
+.card-grip{display:flex;padding:3px;color:inherit;cursor:grab;touch-action:none}
+.card-note.is-moving .card-grip{cursor:grabbing}
+.card-grip svg{width:16px;height:16px}
+.card-tools{display:flex;align-items:center;gap:4px;margin-left:auto}
+.card-tools .icon-button{min-height:24px;padding:2px;color:inherit}
+.card-tools .icon-button svg{width:15px;height:15px}
+.dot{width:14px;height:14px;border-radius:50%;background:var(--paper);box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+.dot.tone-amarelo{--paper:#f6e2a0}
+.dot.tone-azul{--paper:#bed6f1}
+.dot.tone-verde{--paper:#bfdfc3}
+.dot.tone-rosa{--paper:#f0c7d2}
+.dot.tone-branco{--paper:#eceae4}
+.dot.on{box-shadow:inset 0 0 0 1px rgba(0,0,0,.3),0 0 0 2px currentColor}
+
+.card-text{flex:1;padding:10px 12px 14px;overflow:auto;font-size:14px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;outline:none;cursor:text}
+.card-text:empty::before{content:"Escreva aqui";color:rgba(0,0,0,.35)}
+.card-note.tone-branco .card-text:empty::before{color:rgba(0,0,0,.3)}
+.card-resize{position:absolute;right:0;bottom:0;width:22px;height:22px;cursor:nwse-resize;touch-action:none;
+  background:linear-gradient(135deg,transparent 48%,var(--paper-line) 48%,var(--paper-line) 56%,transparent 56%,transparent 72%,var(--paper-line) 72%,var(--paper-line) 80%,transparent 80%)}
+
+.card-live{flex:1;display:flex;flex-direction:column;gap:7px;padding:10px 13px 14px;overflow:auto}
+.card-live .card-label{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.card-live .card-label svg{width:14px;height:14px}
+.card-figure{font-family:var(--serif);font-size:27px;line-height:1.1;font-weight:400}
+.card-figure small{font-size:12px;color:var(--muted);font-family:inherit}
+.card-headline{font-family:var(--serif);font-size:18px;font-weight:400;line-height:1.25}
+.card-live .card-meta{font-size:12px;color:var(--muted)}
+.card-live .card-body{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.card-dl{display:flex;gap:16px;margin:0}
+.card-dl dt{font-size:11px;color:var(--muted)}
+.card-dl dd{margin:0;font-size:13px}
+.card-lines{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.card-lines li{display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid var(--paper-line);font-size:13px}
+.card-lines li:first-child{border-top:0}
+.card-lines li span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card-lines li small{color:var(--muted);font-size:11px;flex:0 0 auto}
+.card-check{display:flex;flex:0 0 auto;width:18px;height:18px;align-items:center;justify-content:center;border:1px solid var(--line-strong);border-radius:50%;color:var(--muted)}
+.card-check svg{width:12px;height:12px}
+.card-check:hover{border-color:var(--accent);color:var(--accent)}
+.card-dots{display:flex;gap:3px;flex:0 0 auto}
+.card-dots i{width:7px;height:7px;border-radius:50%;background:var(--line-strong)}
+.card-dots i.on{background:var(--accent)}
+.card-empty{font-size:12px;color:var(--faint)}
+.quick-label{padding:14px 2px 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint)}
+
+@media (max-width:720px){
+  .canvas{height:clamp(380px,calc(100vh - 250px),680px)}
+  .board-zoom{margin-left:0}
+  .board-bar #board-count{width:100%}
+}

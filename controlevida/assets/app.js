@@ -13,14 +13,16 @@ const shift = (day,n) => { const d = new Date(`${day}T12:00:00Z`); d.setUTCDate(
 const weekday = day => dateObject(day).getDay() || 7;
 const weekStart = day => shift(day,-(weekday(day)-1));
 const shiftMonth = (month,n) => { const d=new Date(`${month}-01T12:00:00Z`); d.setUTCMonth(d.getUTCMonth()+n); return d.toISOString().slice(0,7); };
-const views = {today:['Hoje','layout-dashboard'],tasks:['Tarefas','list-checks'],calendar:['Agenda','calendar-days'],habits:['Hábitos','circle-check'],finance:['Finanças','wallet'],workouts:['Treinos','activity'],meals:['Alimentação','utensils'],notes:['Notas e metas','notebook-pen'],progress:['Evolução','camera'],history:['Histórico','history'],settings:['Ajustes e conexões','settings-2']};
+// Hidden from the menu, but still reachable by their address.
+const hiddenViews = ['settings','history','progress'];
+const views = {today:['Hoje','layout-dashboard'],tasks:['Tarefas','list-checks'],calendar:['Agenda','calendar-days'],habits:['Hábitos','circle-check'],finance:['Finanças','wallet'],workouts:['Treinos','activity'],meals:['Alimentação','utensils'],notes:['Notas e metas','notebook-pen'],miro:['Quadro','sticky-note'],progress:['Evolução','camera'],history:['Histórico','history'],settings:['Ajustes e conexões','settings-2']};
 const kinds = {task:['Tarefa','list-checks'],event:['Evento','calendar-days'],habit:['Hábito','circle-check'],transaction:['Lançamento','wallet'],workout:['Treino','activity'],meal:['Refeição','utensils'],note:['Nota','notebook-pen'],goal:['Meta','flag']};
 const mealNames = {cafe:'Café da manhã',almoco:'Almoço',lanche:'Lanche',jantar:'Jantar',outro:'Outra refeição'};
 const activities = {caminhada:'Caminhada',corrida:'Corrida',forca:'Força',futebol:'Futebol',mobilidade:'Mobilidade',descanso:'Descanso',outro:'Outra atividade'};
 const days = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
 const dayNames = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado','Domingo'];
 const areas = {pessoal:'Pessoal',casa:'Casa',trabalho:'Trabalho'};
-const S = {records:[],settings:{categories:[]},today:localDate(),day:localDate(),month:localDate().slice(0,7),week:weekStart(localDate()),view:'today',csrf:'',search:'',filter:'all',user:null,editing:null,archived:[],busy:false};
+const S = {records:[],cards:[],board:{x:40,y:40,zoom:1},settings:{categories:[]},today:localDate(),day:localDate(),month:localDate().slice(0,7),week:weekStart(localDate()),view:'today',csrf:'',search:'',filter:'all',user:null,editing:null,archived:[],busy:false};
 let toastTimer;
 function toast(message) { $('#toast').textContent=message; $('#toast').hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('#toast').hidden=true,4200); }
 // Only visible while something is wrong or in flight; a click retries.
@@ -42,7 +44,7 @@ async function api(action, body, params={}) {
 function showLogin() { S.records=[]; S.user=null; $('#shell').hidden=true; $('#boot').hidden=true; $('#login').hidden=false; $('#main').replaceChildren(); icons(); }
 async function refresh() {
   status('saving');
-  try { const data=await api('bootstrap'); Object.assign(S,{records:data.records,settings:data.settings,user:data.user,today:data.today,csrf:data.csrf,mcpUrl:data.mcp_url}); $('#boot').hidden=true; $('#login').hidden=true; $('#shell').hidden=false; status(''); render(); }
+  try { const data=await api('bootstrap'); Object.assign(S,{records:data.records.filter(r=>r.kind!=='card'),cards:data.records.filter(r=>r.kind==='card'),settings:data.settings,user:data.user,today:data.today,csrf:data.csrf,mcpUrl:data.mcp_url}); $('#boot').hidden=true; $('#login').hidden=true; $('#shell').hidden=false; status(''); render(); }
   catch(e) { status(navigator.onLine?'error':'offline'); throw e; }
 }
 const records = kind => S.records.filter(r=>r.kind===kind);
@@ -164,7 +166,7 @@ const renderers={today:dashboard,tasks:tasksView,calendar:calendarView,habits:ha
 function render() {
   if(!S.user)return;
   document.title=`${views[S.view][0]} · Controle Vida`;
-  $('#navigation').innerHTML=Object.entries(views).filter(([k])=>k!=='settings').map(([key,[name,i]])=>`<button class="nav-item ${key===S.view?'active':''}" data-view="${key}" ${key===S.view?'aria-current="page"':''}>${icon(i)}<span>${name}</span></button>`).join('');
+  $('#navigation').innerHTML=Object.entries(views).filter(([k])=>!hiddenViews.includes(k)).map(([key,[name,i]])=>`<button class="nav-item ${key===S.view?'active':''}" data-view="${key}" ${key===S.view?'aria-current="page"':''}>${icon(i)}<span>${name}</span></button>`).join('');
   $('#bottom-nav').innerHTML=['today','tasks','finance','habits'].map(key=>`<button class="bottom-item ${key===S.view?'active':''}" data-view="${key}" ${key===S.view?'aria-current="page"':''}>${icon(views[key][1])}<span>${views[key][0]}</span></button>`).join('')+`<button class="bottom-item ${['today','tasks','finance','habits'].includes(S.view)?'':'active'}" data-menu aria-label="Mais áreas">${icon('menu')}<span>Mais</span></button>`;
   $('#main').innerHTML=renderers[S.view]();
   $('#footer-date').textContent=longDate(S.today);
@@ -172,6 +174,7 @@ function render() {
   if(S.scrollBoard)showToday();
   if(S.view==='settings')loadConnections();
   if(S.view==='progress'&&!S.photos)loadPhotos();
+  if(S.view==='miro')mountBoard();
 }
 function navigate(view) { if(!views[view])view='today'; S.view=view; S.search='';S.filter=view==='workouts'?'today':'all';if(view!=='calendar')S.day=S.today; if(!['finance','calendar'].includes(view))S.month=S.today.slice(0,7); S.week=weekStart(S.today); S.scrollBoard=true; location.hash=view; setMenu(false);render(); }
 const input = (name,label,type,value='',extra='') => `<label>${label}<input name="${name}" type="${type}" value="${esc(value)}" ${extra}></label>`;
@@ -399,8 +402,238 @@ if($('#login-form')){
  window.addEventListener('hashchange',()=>{const view=location.hash.slice(1);if(views[view]&&view!==S.view)navigate(view);});
  window.addEventListener('offline',()=>status('offline'));
  window.addEventListener('online',()=>{if(S.user)refresh().catch(e=>toast(e.message));});
- document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.user&&!$('dialog[open]'))refresh().catch(()=>{});});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&S.user&&!$('dialog[open]')&&!cardQueue.size&&!document.activeElement?.isContentEditable)refresh().catch(()=>{});});
  window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();$('#install').hidden=false;$('#install').onclick=async()=>{await event.prompt();$('#install').hidden=true;};});
  if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js',{scope:'/controlevida/'}).catch(()=>{});
  (async()=>{try{const session=await api('session');S.csrf=session.csrf;if(session.user){S.view=views[location.hash.slice(1)]?location.hash.slice(1):'today';await refresh();}else showLogin();}catch(e){$('#boot').textContent=e.message;}})();
 }
+
+/* Quadro: an open canvas. Post-its hold loose text; live cards mirror what the app already knows. */
+const cardColors = {amarelo:'Amarelo',azul:'Azul',verde:'Verde',rosa:'Rosa',branco:'Branco'};
+const liveCards = {saldo:['Saldo do mês','wallet'],pendencias:['Pendências de hoje','list-checks'],habitos:['Hábitos da semana','circle-check'],agenda:['Próximos compromissos','calendar-days'],treinos:['Movimento da semana','activity'],refeicoes:['Alimentação de hoje','utensils']};
+const CARD_MIN_W = 150, CARD_MIN_H = 110, CARD_MAX_ZOOM = 2.4, CARD_MIN_ZOOM = 0.3;
+const boardCards = () => S.cards.filter(c => (c.details.board||'principal') === 'principal');
+const cardOf = id => S.cards.find(c => c.id === id);
+const canvasEl = () => $('#canvas');
+const refRecord = c => (c.details.ref||'').startsWith('rec:') ? S.records.find(r => r.id === c.details.ref.slice(4)) : null;
+const checkable = r => ['task','habit','workout','event','goal'].includes(r.kind);
+// The stored title is what lists and backups show; the post-it itself keeps its text in notes.
+const cardTitle = c => c.details.ref
+  ? (liveCards[c.details.ref]?.[0] || refRecord(c)?.title || 'Card do quadro')
+  : ((c.details.notes||'').split('\n').find(l => l.trim()) || 'Post-it').slice(0,120);
+const cardList = (items,fallback) => items.length ? `<ul class="card-lines">${items.join('')}</ul>` : `<p class="card-empty">${esc(fallback)}</p>`;
+function liveBody(c) {
+  const ref = c.details.ref;
+  if (ref.startsWith('rec:')) {
+    const r = refRecord(c);
+    if (!r) return '<p class="card-empty">Esse registro saiu do app.</p>';
+    const checked = checkable(r) && done(r,S.today);
+    return `<p class="card-label">${icon(kinds[r.kind][1])}${kinds[r.kind][0]}</p><strong class="card-headline">${esc(r.title)}</strong><p class="card-meta">${[r.details.time,r.day?dayLabel(r.day):''].filter(Boolean).map(esc).join(' · ')}</p>${r.details.notes?`<p class="card-body">${esc(r.details.notes)}</p>`:''}${checkable(r)?`<button class="text-button" data-check="${r.id}" data-day="${S.today}">${icon(checked?'rotate-ccw':'check')}${checked?'Feito hoje':'Concluir'}</button>`:''}`;
+  }
+  const label = `<p class="card-label">${icon(liveCards[ref]?.[1]||'database')}${esc(liveCards[ref]?.[0]||'Card')}</p>`;
+  if (ref === 'saldo') {
+    const f = financial(S.today.slice(0,7));
+    return `${label}<strong class="card-figure">${currency(f.balance)}</strong><dl class="card-dl"><div><dt>Entradas</dt><dd class="positive">${currency(f.income)}</dd></div><div><dt>Saídas</dt><dd>${currency(f.expense)}</dd></div></dl>`;
+  }
+  if (ref === 'pendencias') {
+    const open = ['task','habit','workout'].flatMap(k => records(k)).filter(r => due(r,S.today) && !done(r,S.today));
+    return `${label}<strong class="card-figure">${open.length}<small> para hoje</small></strong>${cardList(open.slice(0,6).map(r => `<li><button data-check="${r.id}" data-day="${S.today}" class="card-check" aria-label="Concluir ${esc(r.title)}">${icon('check')}</button><span>${esc(r.title)}</span></li>`),'Nada em aberto. Dia limpo.')}`;
+  }
+  if (ref === 'habitos') {
+    const week = Array.from({length:7},(_,i) => shift(S.today,i-6));
+    return `${label}${cardList(records('habit').slice(0,6).map(r => `<li><span>${esc(r.title)}</span><span class="card-dots">${week.map(d => `<i class="${done(r,d)?'on':''}"></i>`).join('')}</span></li>`),'Nenhum hábito cadastrado.')}`;
+  }
+  if (ref === 'agenda') {
+    const next = records('event').filter(r => r.day >= S.today && r.status !== 'done').sort((a,b) => (a.day+(a.details.time||'')).localeCompare(b.day+(b.details.time||''))).slice(0,5);
+    return `${label}${cardList(next.map(r => `<li><span>${esc(r.title)}</span><small>${esc(dayLabel(r.day))}${r.details.time?' · '+esc(r.details.time):''}</small></li>`),'Agenda livre.')}`;
+  }
+  if (ref === 'treinos') {
+    const since = shift(S.today,-6);
+    const list = records('workout').filter(r => r.day >= since && r.day <= S.today && done(r,r.day));
+    const minutes = list.reduce((total,r) => total+(r.details.duration_min||0),0);
+    return `${label}<strong class="card-figure">${list.length}<small> nos últimos 7 dias</small></strong><p class="card-meta">${minutes} minutos de movimento</p>${cardList(list.slice(0,4).map(r => `<li><span>${esc(r.title)}</span><small>${esc(dayLabel(r.day))}</small></li>`),'Nenhum treino registrado na semana.')}`;
+  }
+  if (ref === 'refeicoes') {
+    const meals = records('meal').filter(r => r.day === S.today);
+    return `${label}${cardList(meals.map(r => `<li><span>${esc(r.title)}</span><small>${esc(mealNames[r.details.meal]||'')}</small></li>`),'Nada anotado hoje.')}`;
+  }
+  return `${label}<p class="card-empty">Card desconhecido.</p>`;
+}
+function place(el,d) { el.style.left=`${d.x}px`; el.style.top=`${d.y}px`; el.style.width=`${d.w}px`; el.style.height=`${d.h}px`; }
+function cardNode(c) {
+  const d = c.details, el = document.createElement('article');
+  el.className = `card-note tone-${d.color}${d.ref?' is-live':''}`;
+  el.dataset.card = c.id;
+  place(el,d);
+  const dots = Object.entries(cardColors).map(([key,name]) => `<button class="dot tone-${key} ${key===d.color?'on':''}" data-color="${key}" data-card-id="${c.id}" title="${name}" aria-label="Cor ${name}"></button>`).join('');
+  el.innerHTML = `<header class="card-bar"><button class="card-grip" data-drag="${c.id}" title="Mover" aria-label="Mover card">${icon('grip-horizontal')}</button><span class="card-tools">${dots}<button class="icon-button" data-card-remove="${c.id}" title="Tirar do quadro" aria-label="Tirar do quadro">${icon('trash-2')}</button></span></header>`
+    + (d.ref ? `<div class="card-live">${liveBody(c)}</div>` : `<div class="card-text" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Texto do post-it" data-text="${c.id}">${esc(d.notes||'')}</div>`)
+    + `<button class="card-resize" data-resize="${c.id}" title="Redimensionar" aria-label="Redimensionar card" tabindex="-1"></button>`;
+  return el;
+}
+function applyBoard() {
+  const sheet = $('#sheet'); if (!sheet) return;
+  sheet.style.transform = `translate(${S.board.x}px,${S.board.y}px) scale(${S.board.zoom})`;
+  const label = $('[data-board-zoom=reset]'); if (label) label.textContent = `${Math.round(S.board.zoom*100)}%`;
+  try { localStorage.setItem('cv-quadro',JSON.stringify(S.board)); } catch {}
+}
+function mountBoard() {
+  const sheet = $('#sheet'); if (!sheet) return;
+  const cards = boardCards();
+  sheet.replaceChildren(...cards.map(cardNode));
+  $('#board-count').textContent = cards.length ? `${cards.length} ${cards.length===1?'card':'cards'}` : 'Quadro vazio';
+  applyBoard(); icons();
+}
+function miroView() {
+  return `${header('Quadro','SEU CADERNÃO, SEM LINHAS')}<div class="board-bar"><button class="primary compact" data-card-new="">${icon('plus')}Post-it</button><button class="secondary compact" data-card-pick>${icon('database')}Trazer do app</button><span class="board-zoom">${actionButton('zoom-out','Diminuir','data-board-zoom="out"')}<button class="text-button" data-board-zoom="reset" title="Voltar ao tamanho normal">100%</button>${actionButton('zoom-in','Aumentar','data-board-zoom="in"')}${actionButton('scan','Enquadrar tudo','data-board-fit')}</span><small class="muted" id="board-count"></small></div><div class="canvas" id="canvas"><div class="sheet" id="sheet"></div><p class="canvas-hint">Arraste o fundo para passear · dois dedos, ou Ctrl e a rolagem, para o zoom</p></div>`;
+}
+renderers.miro = miroView;
+try { const saved = JSON.parse(localStorage.getItem('cv-quadro')||'null'); if (saved && Number.isFinite(saved.zoom) && Number.isFinite(saved.x)) S.board = {x:saved.x,y:saved.y,zoom:Math.min(CARD_MAX_ZOOM,Math.max(CARD_MIN_ZOOM,saved.zoom))}; } catch {}
+
+/* Each change is saved on its own, a moment after the hand stops. */
+const cardQueue = new Set(); let cardTimer;
+function queueCard(id) { cardQueue.add(id); clearTimeout(cardTimer); cardTimer = setTimeout(flushCards,800); }
+async function flushCards() {
+  if (!cardQueue.size) return;
+  const ids = [...cardQueue]; cardQueue.clear(); status('saving');
+  try {
+    for (const id of ids) {
+      const c = cardOf(id); if (!c) continue;
+      const saved = await api('save',{id:c.id,revision:c.revision,kind:'card',title:cardTitle(c),day:'',details:c.details});
+      c.revision = saved.revision; c.title = saved.title; c.updated_at = saved.updated_at;
+    }
+    status('');
+  } catch(e) { status('error'); toast(e.message); }
+}
+async function addCard(ref='') {
+  const box = canvasEl().getBoundingClientRect();
+  const w = ref?300:230, h = ref?220:180, step = (boardCards().length%6)*20;
+  const details = {board:'principal',color:ref?'branco':'amarelo',ref,notes:'',w,h,
+    x:Math.round((box.width/2-S.board.x)/S.board.zoom-w/2+step), y:Math.round((box.height/2-S.board.y)/S.board.zoom-h/2+step)};
+  status('saving');
+  const saved = await api('save',{kind:'card',title:ref?(liveCards[ref]?.[0]||'Card do quadro'):'Post-it',day:'',details});
+  S.cards.push(saved); status(''); mountBoard();
+  if (!ref) $(`[data-text="${saved.id}"]`)?.focus();
+}
+async function removeCard(id) {
+  const c = cardOf(id); if (!c) return;
+  await api('archive',{id,revision:c.revision,archived:true});
+  S.cards = S.cards.filter(x => x.id !== id); mountBoard(); toast('Card tirado do quadro.');
+}
+function setCardColor(id,color) {
+  const c = cardOf(id); if (!c || c.details.color === color) return;
+  c.details.color = color;
+  const el = $(`[data-card="${id}"]`);
+  el.className = `card-note tone-${color}${c.details.ref?' is-live':''}`;
+  $$('.dot',el).forEach(dot => dot.classList.toggle('on',dot.dataset.color === color));
+  queueCard(id);
+}
+function pickCard() {
+  $('#quick-menu h2').textContent = 'O que trazer para o quadro?';
+  const live = Object.entries(liveCards).map(([key,[label,i]]) => `<button data-card-new="${key}">${icon(i)}${label}${icon('chevron-right')}</button>`).join('');
+  const open = S.records.filter(r => ['task','event','goal','note'].includes(r.kind) && r.status !== 'done').slice(0,12);
+  $('#quick-options').innerHTML = live + (open.length ? `<p class="quick-label">Registros de agora</p>${open.map(r => `<button data-card-new="rec:${r.id}">${icon(kinds[r.kind][1])}${esc(r.title)}${icon('chevron-right')}</button>`).join('')}` : '');
+  $('#quick-menu').showModal(); icons();
+}
+// Zoom keeps the point under the cursor, or between the fingers, where it is.
+function zoomTo(zoom,clientX,clientY) {
+  const box = canvasEl().getBoundingClientRect();
+  const next = Math.min(CARD_MAX_ZOOM,Math.max(CARD_MIN_ZOOM,zoom)), px = clientX-box.left, py = clientY-box.top;
+  S.board.x = px-(px-S.board.x)*(next/S.board.zoom);
+  S.board.y = py-(py-S.board.y)*(next/S.board.zoom);
+  S.board.zoom = next; applyBoard();
+}
+function zoomCenter(zoom) { const box = canvasEl().getBoundingClientRect(); zoomTo(zoom,box.left+box.width/2,box.top+box.height/2); }
+function fitBoard() {
+  const cards = boardCards(), box = canvasEl().getBoundingClientRect();
+  if (!cards.length) { S.board = {x:box.width/2-115,y:box.height/2-90,zoom:1}; return applyBoard(); }
+  const x1 = Math.min(...cards.map(c => c.details.x)), y1 = Math.min(...cards.map(c => c.details.y));
+  const x2 = Math.max(...cards.map(c => c.details.x+c.details.w)), y2 = Math.max(...cards.map(c => c.details.y+c.details.h));
+  const zoom = Math.min(1,Math.max(CARD_MIN_ZOOM,Math.min((box.width-72)/(x2-x1),(box.height-72)/(y2-y1))));
+  S.board = {zoom,x:(box.width-(x2-x1)*zoom)/2-x1*zoom,y:(box.height-(y2-y1)*zoom)/2-y1*zoom};
+  applyBoard();
+}
+/* One gesture at a time: moving a card, resizing it, panning the sheet or pinching it. */
+let gesture = null; const touches = new Map();
+const middle = (a,b) => ({x:(a.x+b.x)/2,y:(a.y+b.y)/2});
+function cardDown(event) {
+  const canvas = event.target.closest('#canvas'); if (!canvas || event.button) return;
+  touches.set(event.pointerId,{x:event.clientX,y:event.clientY});
+  if (touches.size === 2) {
+    const [a,b] = [...touches.values()];
+    gesture = {mode:'pinch',dist:Math.max(1,Math.hypot(a.x-b.x,a.y-b.y)),zoom:S.board.zoom};
+    return;
+  }
+  const grip = event.target.closest('[data-drag]'), handle = event.target.closest('[data-resize]');
+  if (grip) {
+    const c = cardOf(grip.dataset.drag), el = grip.closest('[data-card]');
+    gesture = {mode:'move',c,el,x:event.clientX,y:event.clientY,ox:c.details.x,oy:c.details.y};
+    el.classList.add('is-moving');
+  } else if (handle) {
+    const c = cardOf(handle.dataset.resize);
+    gesture = {mode:'size',c,el:handle.closest('[data-card]'),x:event.clientX,y:event.clientY,ow:c.details.w,oh:c.details.h};
+  } else if (event.target === canvas || event.target.id === 'sheet') {
+    gesture = {mode:'pan',x:event.clientX,y:event.clientY,ox:S.board.x,oy:S.board.y};
+    canvas.classList.add('is-panning');
+  } else return;
+  try { canvas.setPointerCapture(event.pointerId); } catch {}
+}
+function cardMove(event) {
+  if (touches.has(event.pointerId)) touches.set(event.pointerId,{x:event.clientX,y:event.clientY});
+  if (!gesture) return;
+  if (gesture.mode === 'pinch') {
+    const [a,b] = [...touches.values()]; if (!b) return;
+    const point = middle(a,b);
+    zoomTo(gesture.zoom*Math.hypot(a.x-b.x,a.y-b.y)/gesture.dist,point.x,point.y);
+    return;
+  }
+  if (gesture.mode === 'pan') {
+    S.board.x = gesture.ox+event.clientX-gesture.x; S.board.y = gesture.oy+event.clientY-gesture.y;
+    applyBoard(); return;
+  }
+  const dx = (event.clientX-gesture.x)/S.board.zoom, dy = (event.clientY-gesture.y)/S.board.zoom;
+  if (gesture.mode === 'move') { gesture.c.details.x = Math.round(gesture.ox+dx); gesture.c.details.y = Math.round(gesture.oy+dy); }
+  else { gesture.c.details.w = Math.round(Math.max(CARD_MIN_W,gesture.ow+dx)); gesture.c.details.h = Math.round(Math.max(CARD_MIN_H,gesture.oh+dy)); }
+  gesture.moved = true; place(gesture.el,gesture.c.details);
+}
+function cardUp(event) {
+  touches.delete(event.pointerId);
+  if (!gesture) return;
+  const last = gesture; gesture = null;
+  canvasEl()?.classList.remove('is-panning');
+  last.el?.classList.remove('is-moving');
+  if (last.moved && last.c) queueCard(last.c.id);
+}
+document.addEventListener('pointerdown',cardDown);
+document.addEventListener('pointermove',cardMove);
+document.addEventListener('pointerup',cardUp);
+document.addEventListener('pointercancel',cardUp);
+document.addEventListener('wheel',event => {
+  if (!event.target.closest('#canvas')) return;
+  event.preventDefault();
+  if (event.ctrlKey || event.metaKey) zoomTo(S.board.zoom*(1-event.deltaY/420),event.clientX,event.clientY);
+  else { S.board.x -= event.deltaX; S.board.y -= event.deltaY; applyBoard(); }
+},{passive:false});
+document.addEventListener('input',event => {
+  const field = event.target.closest?.('[data-text]'); if (!field) return;
+  const c = cardOf(field.dataset.text); if (!c) return;
+  c.details.notes = field.innerText.replace(/ /g,' ').slice(0,12000);
+  queueCard(c.id);
+});
+// Pasted text arrives plain, so a copied page never brings its markup into the board.
+document.addEventListener('paste',event => {
+  if (!event.target.closest?.('[data-text]')) return;
+  event.preventDefault();
+  document.execCommand('insertText',false,(event.clipboardData?.getData('text/plain')||'').slice(0,8000));
+});
+document.addEventListener('click',async event => {
+  const b = event.target.closest('button'); if (!b) return;
+  try {
+    if (b.hasAttribute('data-card-new')) { $('#quick-menu').close(); await addCard(b.dataset.cardNew); }
+    if (b.hasAttribute('data-card-pick')) pickCard();
+    if (b.dataset.cardRemove) await removeCard(b.dataset.cardRemove);
+    if (b.dataset.color) setCardColor(b.dataset.cardId,b.dataset.color);
+    if (b.dataset.boardZoom) zoomCenter(b.dataset.boardZoom === 'reset' ? 1 : S.board.zoom*(b.dataset.boardZoom === 'in' ? 1.25 : 0.8));
+    if (b.hasAttribute('data-board-fit')) fitBoard();
+  } catch(e) { status('error'); toast(e.message); }
+});

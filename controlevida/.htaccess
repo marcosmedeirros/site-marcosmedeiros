@@ -4,6 +4,8 @@ DirectoryIndex index.php
   RewriteEngine On
   # Server code, development tooling and private data are never served.
   RewriteRule ^(?:server|scripts|tests|docs|node_modules)(?:/|$) - [F,L]
+  # Friendly address for the board.
+  RewriteRule ^miro/?$ miro.php [L]
   # OAuth discovery for MCP clients that look under the app path.
   RewriteRule ^\.well-known/(?:oauth-protected-resource|oauth-authorization-server|openid-configuration)(?:/.*)?$ metadata.php [L,QSA]
   RewriteRule (?:^|/)\. - [F,L]
