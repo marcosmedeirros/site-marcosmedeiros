@@ -58,6 +58,7 @@ function cv_details(string $kind, array $d, array $old = []): array {
         $out['weekdays'] = array_values(array_unique(array_map(fn($n) => cv_int($n,1,7), $weekdays)));
         if ($out['recurrence'] === 'weekly' && !$out['weekdays']) cv_fail('Escolha ao menos um dia da semana.');
         $out['completed_dates'] = $old['completed_dates'] ?? [];
+        $out['order'] = cv_int($d['order'] ?? ($old['order'] ?? 0), 0, 9999);
     }
     if ($kind === 'task') $out += ['area' => cv_enum($d['area'] ?? 'pessoal',['pessoal','casa','trabalho']), 'priority' => cv_enum($d['priority'] ?? 'normal',['baixa','normal','alta'])];
     if (in_array($kind,['event','meal','workout','habit','task'],true)) {

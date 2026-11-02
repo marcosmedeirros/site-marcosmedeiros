@@ -605,3 +605,9 @@ dialog::backdrop{background:rgba(0,0,0,.65)}
   .board-tools .compact{width:36px;padding:0;justify-content:center}
   .board-tools .compact span{display:none}
 }
+
+/* Alça para reordenar hábitos. */
+.habit-name{display:flex;align-items:center;gap:8px;min-width:0}
+.habit-name>div{min-width:0;flex:1}
+.habit-name .grip{width:32px;height:32px;flex:0 0 32px;margin-left:-6px}
+.habit-table-row.is-moving{opacity:.65;border-color:var(--accent)}
